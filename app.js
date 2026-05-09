@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.1";
+  const VERSION = "production_scoring_v0.5.2";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -967,6 +967,7 @@
   function setAccuracy(scoreValue) {
     const item = currentItem();
     if (!item) return;
+    const score = scoreFor(item);
     const patch = { accuracy_score: scoreValue };
     if (scoreValue === "NR") {
       patch.onset_status = "no_speech";
@@ -975,6 +976,14 @@
       patch.offset_ms_rater = null;
       els.onsetInput.value = "";
       els.offsetInput.value = "";
+      setMarkerMode(null);
+    } else if (score.onset_status === "no_speech") {
+      patch.onset_status = "";
+      patch.onset_ms_rater = null;
+      patch.offset_status = "";
+      patch.offset_ms_rater = null;
+      els.onsetInput.value = item.onset_ms_auto != null ? item.onset_ms_auto.toFixed(1) : "";
+      els.offsetInput.value = item.offset_ms_auto != null ? item.offset_ms_auto.toFixed(1) : "";
       setMarkerMode(null);
     }
     patchScore(item, patch);
@@ -1101,7 +1110,7 @@
 
   function startMarkerDrag(event) {
     if (!state.audioReady) return;
-    const marker = markerNearPointer(event) || state.markerMode;
+    const marker = state.markerMode || markerNearPointer(event);
     if (!marker) return;
     event.preventDefault();
     state.draggingMarker = marker;
@@ -1327,10 +1336,23 @@
     if (button) setOnsetStatus(button.dataset.onset);
   });
   els.applyOnsetBtn.addEventListener("click", () => {
+    const item = currentItem();
+    const score = scoreFor(item);
     const onsetValue = Number.parseFloat(els.onsetInput.value);
     const offsetValue = Number.parseFloat(els.offsetInput.value);
-    if (Number.isFinite(onsetValue)) applyManualOnset(onsetValue);
-    if (Number.isFinite(offsetValue)) applyManualOffset(offsetValue);
+    const currentOnset = markerOnsetMs(item, score);
+    const currentOffset = markerOffsetMs(item, score);
+    const onsetChanged = Number.isFinite(onsetValue) && (
+      currentOnset == null ||
+      Math.abs(onsetValue - Number(currentOnset)) >= 0.05 ||
+      !score.onset_status
+    );
+    const offsetChanged = Number.isFinite(offsetValue) && (
+      currentOffset == null ||
+      Math.abs(offsetValue - Number(currentOffset)) >= 0.05
+    );
+    if (onsetChanged) applyManualOnset(onsetValue);
+    if (offsetChanged) applyManualOffset(offsetValue);
   });
   els.setOnsetMarkerBtn.addEventListener("click", () => setMarkerMode(state.markerMode === "onset" ? null : "onset"));
   els.setOffsetMarkerBtn.addEventListener("click", () => setMarkerMode(state.markerMode === "offset" ? null : "offset"));

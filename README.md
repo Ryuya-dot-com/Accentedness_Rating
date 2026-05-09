@@ -55,6 +55,14 @@ Accentedness_Rating/
         001_icicle.wav
 ```
 
+For recordings collected with `Accentedness_Tests`, generate this manifest from the `Accentedness_Tests` repository root with:
+
+```bash
+python3 scripts/build_downstream_manifests.py path/to/*_tests_vocabulary_task_results.zip -o downstream_upload
+```
+
+Then copy `downstream_upload/scoring_manifest.csv` and `downstream_upload/recordings/` into this repository or another static host.
+
 Required columns:
 
 - `participant_id`

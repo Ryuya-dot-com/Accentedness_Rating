@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.3.0";
+  const VERSION = "production_scoring_v0.4.0";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["audio_file", "recording_file", "file", "filename", "path"];
@@ -325,7 +325,7 @@
   function syncCustomManifestVisibility() {
     els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
     els.sourceSummary.textContent = els.customManifestToggle.checked
-      ? "Custom manifest selected"
+      ? "Custom manifest enabled"
       : `Default: ${DEFAULT_MANIFEST_URL}`;
   }
 
@@ -338,7 +338,7 @@
 
   async function loadManifest() {
     els.loadManifestBtn.disabled = true;
-    setSetupStatus("Loading");
+    setSetupStatus("Loading manifest");
     setLog(`Loading recordings:\n${manifestInput()}`);
 
     const { rows, url } = await fetchCsv(manifestInput());
@@ -440,7 +440,7 @@
     if (state.items.length) {
       setSetupStatus("Ready", true);
     } else if (!state.manifestItems.length) {
-      setSetupStatus("Loading source");
+      setSetupStatus("Loading participant list");
     } else if (!taskCount) {
       setSetupStatus("Tasks needed");
     } else if (!assigned.length) {

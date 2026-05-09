@@ -20,9 +20,9 @@
         <div class="panel-heading">
           <div>
             <h2>Scoring setup</h2>
-            <p>L2-to-L1 translation and Picture Naming response scoring.</p>
+            <p>Select uploaded participant recordings for L2-to-L1 Translation and Picture Naming scoring.</p>
           </div>
-          <div class="setup-status" id="setup-status">Waiting for manifest</div>
+          <div class="setup-status" id="setup-status">Loading participants</div>
         </div>
 
         <div class="status-grid" aria-live="polite">
@@ -65,19 +65,32 @@
 
           <section class="setup-section">
             <div class="section-row">
-              <h3>Source</h3>
-              <button id="load-manifest-btn" class="secondary">Reload participants</button>
+              <h3>Participant recordings</h3>
+              <button id="load-manifest-btn" class="secondary">Reload participant list</button>
             </div>
-            <div class="source-card">
-              <label class="checkbox-label source-option">
-                <input id="custom-manifest-toggle" type="checkbox" />
-                Use a custom manifest CSV
-              </label>
+            <div class="source-card primary-source">
+              <div class="source-heading">
+                <p class="source-kicker">GitHub audio set</p>
+                <h4>Choose participant ID(s) to score</h4>
+                <p>Recordings are loaded from the uploaded scoring manifest, then filtered by task and participant.</p>
+              </div>
               <div class="source-summary" id="source-summary">Default: scoring_manifest_demo.csv</div>
-              <label id="custom-manifest-field" class="custom-field hidden">
-                Manifest URL
-                <input id="manifest-url" type="text" autocomplete="off" value="scoring_manifest_demo.csv" />
-              </label>
+
+              <details class="manifest-details">
+                <summary>Use a different scoring manifest</summary>
+                <label class="checkbox-label source-option">
+                  <input id="custom-manifest-toggle" type="checkbox" />
+                  Enable custom manifest URL
+                </label>
+                <label id="custom-manifest-field" class="custom-field hidden">
+                  Manifest URL
+                  <input id="manifest-url" type="text" autocomplete="off" value="scoring_manifest_demo.csv" />
+                </label>
+              </details>
+
+              <p class="privacy-note">
+                Use anonymized participant IDs only. Do not include names, student numbers, or other direct identifiers in uploaded filenames.
+              </p>
             </div>
           </section>
 
@@ -108,7 +121,7 @@
         </div>
 
         <div class="actions">
-          <button id="prepare-btn" disabled>Prepare scoring</button>
+          <button id="prepare-btn" disabled>Prepare selected participants</button>
           <button id="start-btn" disabled>Start scoring</button>
           <button id="export-csv-btn" class="secondary" disabled>Export CSV</button>
           <button id="export-json-btn" class="secondary" disabled>Export JSON</button>

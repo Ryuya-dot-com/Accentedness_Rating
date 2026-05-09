@@ -245,6 +245,39 @@ label {
   padding: 14px;
 }
 
+.source-card.primary-source {
+  background: #f2f8f8;
+  border-color: #bad3d6;
+}
+
+.source-heading h4,
+.source-heading p {
+  margin: 0;
+}
+
+.source-heading h4 {
+  color: #1f2a36;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.source-heading h4 + p {
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 6px;
+  max-width: 660px;
+}
+
+.source-kicker {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .source-option {
   align-items: center;
   min-height: auto;
@@ -258,6 +291,29 @@ label {
 
 .custom-field {
   max-width: 560px;
+}
+
+.manifest-details {
+  border-top: 1px solid rgba(16, 82, 86, 0.16);
+  padding-top: 12px;
+}
+
+.manifest-details summary {
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.manifest-details .source-option {
+  margin-top: 12px;
+}
+
+.privacy-note {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0;
 }
 
 .task-check-grid {

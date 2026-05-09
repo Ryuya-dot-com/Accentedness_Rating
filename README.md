@@ -7,13 +7,13 @@ Static browser scorer for participant recordings from:
 
 It is modeled after the workflow in [Variability_Scoring](https://github.com/Ryuya-dot-com/Variability_Scoring): raters listen to each recording, verify or correct the response onset, assign an accuracy score, and export scoring data.
 
-## Entry Point
+## Public Entry Point
 
 ```text
-Production_Scoring_Platform/index.html
+https://ryuya-dot-com.github.io/Accentedness_Rating/
 ```
 
-Local preview from `Experiment/`:
+Local preview:
 
 ```sh
 python3 -m http.server 8765
@@ -22,22 +22,38 @@ python3 -m http.server 8765
 Then open:
 
 ```text
-http://127.0.0.1:8765/Production_Scoring_Platform/
+http://127.0.0.1:8765/
 ```
 
 ## Participant Checkbox Workflow
 
-The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows task checkboxes and participant checkboxes. A custom manifest URL is available only through the `Use a custom manifest CSV` option.
+The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows task checkboxes and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
 
 Recommended rater flow:
 
 1. Enter `Rater ID`.
 2. Check the task type(s) to score.
 3. Check the participant ID(s) assigned to the rater.
-4. Click `Prepare scoring`.
+4. Click `Prepare selected participants`.
 5. Click `Start scoring`.
 
 Upload recordings to GitHub Pages, raw GitHub, or another static host, and keep the manifest next to the platform or point the custom manifest option to the manifest CSV.
+
+Important: uploaded participant recordings must be anonymized before publication. Do not include names, student numbers, email addresses, or other direct identifiers in folder names, filenames, manifest rows, or GitHub commit history.
+
+Recommended GitHub Pages layout:
+
+```text
+Accentedness_Rating/
+  index.html
+  scoring_manifest.csv
+  recordings/
+    001/
+      l2_to_l1/
+        001_trial001_icicle.wav
+      picture_naming/
+        001_icicle.wav
+```
 
 Required columns:
 
@@ -61,7 +77,7 @@ Recommended columns:
 - `word_number`
 - `image_file` or `image_url` for Picture Naming
 
-Relative paths in `audio_file` and `image_file` are resolved relative to the manifest URL.
+Relative paths in `audio_file` and `image_file` are resolved relative to the manifest URL. Absolute `audio_url` and `image_url` values can point to another static host.
 
 See:
 

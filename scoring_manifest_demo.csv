@@ -1,7 +1,7 @@
 participant_id,task,trial_number,target_word,expected_response,expected_language,audio_file,audio_url,image_file,image_url,stimulus_end_ms,image_onset_ms_rel,onset_ms_auto,latency_ms_auto,condition,accent_condition,list,word_number,notes
-practice_001,l2_to_l1,1,chocolate,チョコレート,L1,../Rating_Platform/practice_audio/japanese/chocolate.wav,,,,150,,350,200,demo,japanese,practice,1,
-practice_001,l2_to_l1,2,coffee,コーヒー,L1,../Rating_Platform/practice_audio/japanese/coffee.wav,,,,150,,360,210,demo,japanese,practice,2,
-practice_001,picture_naming,1,pizza,pizza,L2,../Rating_Platform/practice_audio/chinese/pizza.wav,,,,,0,260,260,demo,chinese,practice,3,
-practice_001,picture_naming,2,sofa,sofa,L2,../Rating_Platform/practice_audio/chinese/sofa.wav,,,,,0,280,280,demo,chinese,practice,4,
-practice_002,l2_to_l1,1,chocolate,チョコレート,L1,../Rating_Platform/practice_audio/english/chocolate.wav,,,,150,,300,150,demo,english,practice,1,
-practice_002,picture_naming,1,coffee,coffee,L2,../Rating_Platform/practice_audio/english/coffee.wav,,,,,0,250,250,demo,english,practice,2,
+practice_001,l2_to_l1,1,chocolate,チョコレート,L1,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/japanese/chocolate.wav,,,150,,350,200,demo,japanese,practice,1,
+practice_001,l2_to_l1,2,coffee,コーヒー,L1,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/japanese/coffee.wav,,,150,,360,210,demo,japanese,practice,2,
+practice_001,picture_naming,1,pizza,pizza,L2,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/chinese/pizza.wav,,,,0,260,260,demo,chinese,practice,3,
+practice_001,picture_naming,2,sofa,sofa,L2,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/chinese/sofa.wav,,,,0,280,280,demo,chinese,practice,4,
+practice_002,l2_to_l1,1,chocolate,チョコレート,L1,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/english/chocolate.wav,,,150,,300,150,demo,english,practice,1,
+practice_002,picture_naming,1,coffee,coffee,L2,,https://ryuya-dot-com.github.io/Accentedness_Comprehensibility/practice_audio/english/coffee.wav,,,,0,250,250,demo,english,practice,2,

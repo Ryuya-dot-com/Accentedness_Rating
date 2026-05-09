@@ -1,7 +1,8 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.2.0";
+  const VERSION = "production_scoring_v0.3.0";
+  const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["audio_file", "recording_file", "file", "filename", "path"];
   const IMAGE_URL_COLUMNS = ["image_url", "picture_url", "stimulus_image_url"];
@@ -26,8 +27,12 @@
     statusTrials: document.getElementById("status-trials"),
     raterId: document.getElementById("rater-id"),
     sessionId: document.getElementById("session-id"),
+    customManifestToggle: document.getElementById("custom-manifest-toggle"),
+    customManifestField: document.getElementById("custom-manifest-field"),
+    sourceSummary: document.getElementById("source-summary"),
     manifestUrl: document.getElementById("manifest-url"),
-    taskFilter: document.getElementById("task-filter"),
+    taskFilterL2: document.getElementById("task-filter-l2"),
+    taskFilterPicture: document.getElementById("task-filter-picture"),
     shuffleTrials: document.getElementById("shuffle-trials"),
     loadManifestBtn: document.getElementById("load-manifest-btn"),
     selectAllBtn: document.getElementById("select-all-btn"),
@@ -301,27 +306,42 @@
     return item;
   }
 
+  function manifestInput() {
+    if (!els.customManifestToggle.checked) return DEFAULT_MANIFEST_URL;
+    return els.manifestUrl.value.trim() || DEFAULT_MANIFEST_URL;
+  }
+
+  function selectedTaskSet() {
+    const tasks = new Set();
+    if (els.taskFilterL2.checked) tasks.add("l2_to_l1");
+    if (els.taskFilterPicture.checked) tasks.add("picture_naming");
+    return tasks;
+  }
+
+  function selectedTaskKey() {
+    return [...selectedTaskSet()].sort().join("|") || "none";
+  }
+
+  function syncCustomManifestVisibility() {
+    els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
+    els.sourceSummary.textContent = els.customManifestToggle.checked
+      ? "Custom manifest selected"
+      : `Default: ${DEFAULT_MANIFEST_URL}`;
+  }
+
   async function fetchCsv(url) {
-    const resolvedUrl = resolveUrl(url || "scoring_manifest_demo.csv");
+    const resolvedUrl = resolveUrl(url || DEFAULT_MANIFEST_URL);
     const response = await fetch(resolvedUrl, { cache: "no-store" });
     if (!response.ok) throw new Error(`Could not load ${resolvedUrl} (${response.status})`);
     return { rows: parseCsv(await response.text()), url: resolvedUrl };
   }
 
   async function loadManifest() {
-    const raterId = els.raterId.value.trim();
-    if (!raterId) {
-      setSetupStatus("Rater needed");
-      setLog("Enter a rater ID before loading the scoring manifest.");
-      els.raterId.focus();
-      return;
-    }
-
     els.loadManifestBtn.disabled = true;
     setSetupStatus("Loading");
-    setLog(`Loading manifest:\n${els.manifestUrl.value.trim() || "scoring_manifest_demo.csv"}`);
+    setLog(`Loading recordings:\n${manifestInput()}`);
 
-    const { rows, url } = await fetchCsv(els.manifestUrl.value.trim() || "scoring_manifest_demo.csv");
+    const { rows, url } = await fetchCsv(manifestInput());
     const items = rows.map((row, index) => normalizeManifestRow(row, index, url)).filter(Boolean);
     if (!items.length) {
       state.manifestItems = [];
@@ -337,6 +357,7 @@
     state.scores = {};
     updateSetupSummary();
     renderParticipants();
+    els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_MANIFEST_URL}`;
     setLog([
       `manifest_url: ${url}`,
       `usable_rows: ${items.length}`,
@@ -348,8 +369,9 @@
   }
 
   function filteredManifestItems() {
-    const task = els.taskFilter.value;
-    return state.manifestItems.filter((item) => task === "all" || item.task === task);
+    const tasks = selectedTaskSet();
+    if (!tasks.size) return [];
+    return state.manifestItems.filter((item) => tasks.has(item.task));
   }
 
   function renderParticipants() {
@@ -369,7 +391,7 @@
     els.participantGrid.innerHTML = "";
     els.participantGrid.classList.toggle("empty", participants.length === 0);
     if (!participants.length) {
-      els.participantGrid.textContent = state.manifestItems.length ? "No participants for this task filter." : "No manifest loaded.";
+      els.participantGrid.textContent = state.manifestItems.length ? "No participants for the checked tasks." : "Loading participants...";
     } else {
       participants.forEach(([participantId, info]) => {
         const label = document.createElement("label");
@@ -412,13 +434,19 @@
     els.statusAssigned.textContent = String(assigned.length);
     els.statusTrials.textContent = String(trials);
 
-    els.prepareBtn.disabled = !(els.raterId.value.trim() && assigned.length && trials);
+    const hasRater = Boolean(els.raterId.value.trim());
+    const taskCount = selectedTaskSet().size;
+    els.prepareBtn.disabled = !(hasRater && assigned.length && trials);
     if (state.items.length) {
       setSetupStatus("Ready", true);
     } else if (!state.manifestItems.length) {
-      setSetupStatus("Waiting for manifest");
+      setSetupStatus("Loading source");
+    } else if (!taskCount) {
+      setSetupStatus("Tasks needed");
     } else if (!assigned.length) {
       setSetupStatus("Participants needed");
+    } else if (!hasRater) {
+      setSetupStatus("Rater needed");
     } else if (trials) {
       setSetupStatus("Ready to prepare");
     }
@@ -429,7 +457,7 @@
       els.raterId.value.trim(),
       els.sessionId.value.trim(),
       state.manifestUrl,
-      els.taskFilter.value,
+      selectedTaskKey(),
       state.assignedParticipants.join("|"),
     ].join("::");
     return `productionScoring_${hashString(seed)}`;
@@ -451,7 +479,7 @@
       rater_id: els.raterId.value.trim(),
       session_id: els.sessionId.value.trim(),
       manifest_url: state.manifestUrl,
-      task_filter: els.taskFilter.value,
+      task_filter: selectedTaskKey(),
       assigned_participants: state.assignedParticipants,
       current_index: state.currentIndex,
       scores: state.scores,
@@ -1096,7 +1124,19 @@
       setLog(`Manifest load failed: ${error.message}`);
     });
   });
-  els.taskFilter.addEventListener("change", renderParticipants);
+  els.customManifestToggle.addEventListener("change", syncCustomManifestVisibility);
+  els.manifestUrl.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      loadManifest().catch((error) => {
+        els.loadManifestBtn.disabled = false;
+        setSetupStatus("Load failed");
+        setLog(`Manifest load failed: ${error.message}`);
+      });
+    }
+  });
+  els.taskFilterL2.addEventListener("change", renderParticipants);
+  els.taskFilterPicture.addEventListener("change", renderParticipants);
   els.raterId.addEventListener("input", updateSetupSummary);
   els.selectAllBtn.addEventListener("click", () => {
     els.participantGrid.querySelectorAll("input").forEach((input) => {
@@ -1144,6 +1184,13 @@
   els.notesInput.addEventListener("input", updateNotes);
   els.exportCsvBtn.addEventListener("click", exportCsv);
   els.exportJsonBtn.addEventListener("click", exportJson);
+
+  syncCustomManifestVisibility();
+  loadManifest().catch((error) => {
+    els.loadManifestBtn.disabled = false;
+    setSetupStatus("Load failed");
+    setLog(`Manifest load failed: ${error.message}`);
+  });
 
   document.addEventListener("keydown", (event) => {
     const tag = event.target.tagName.toLowerCase();

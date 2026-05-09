@@ -214,7 +214,7 @@ textarea:focus-visible {
 .form-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: 1fr 1fr 2fr 1.4fr 1.4fr;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
 label {
@@ -233,6 +233,52 @@ label {
 }
 
 .checkbox-label input {
+  inline-size: auto;
+}
+
+.source-card {
+  background: #f5f9fa;
+  border: 1px solid #c7d8dc;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.source-option {
+  align-items: center;
+  min-height: auto;
+}
+
+.source-summary {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.custom-field {
+  max-width: 560px;
+}
+
+.task-check-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.task-option {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dce3eb;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  min-height: 46px;
+  padding: 10px 12px;
+}
+
+.task-option input {
   inline-size: auto;
 }
 
@@ -619,6 +665,7 @@ label {
   }
 
   .form-grid,
+  .task-check-grid,
   .status-grid,
   .participant-grid,
   .scoring-layout,

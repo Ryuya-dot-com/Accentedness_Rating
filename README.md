@@ -25,9 +25,19 @@ Then open:
 http://127.0.0.1:8765/Production_Scoring_Platform/
 ```
 
-## Manifest Workflow
+## Participant Checkbox Workflow
 
-The platform is CSV-driven. Upload recordings to GitHub Pages, raw GitHub, or another static host, then point the setup screen to a manifest CSV.
+The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows task checkboxes and participant checkboxes. A custom manifest URL is available only through the `Use a custom manifest CSV` option.
+
+Recommended rater flow:
+
+1. Enter `Rater ID`.
+2. Check the task type(s) to score.
+3. Check the participant ID(s) assigned to the rater.
+4. Click `Prepare scoring`.
+5. Click `Start scoring`.
+
+Upload recordings to GitHub Pages, raw GitHub, or another static host, and keep the manifest next to the platform or point the custom manifest option to the manifest CSV.
 
 Required columns:
 

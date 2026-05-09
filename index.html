@@ -56,18 +56,6 @@
                 Session label
                 <input id="session-id" type="text" autocomplete="off" placeholder="session01" />
               </label>
-              <label>
-                Manifest URL
-                <input id="manifest-url" type="text" autocomplete="off" value="scoring_manifest_demo.csv" />
-              </label>
-              <label>
-                Task
-                <select id="task-filter">
-                  <option value="all">All tasks</option>
-                  <option value="l2_to_l1">L2-to-L1 translation</option>
-                  <option value="picture_naming">Picture Naming</option>
-                </select>
-              </label>
               <label class="checkbox-label">
                 <input id="shuffle-trials" type="checkbox" checked />
                 Shuffle trials within participant
@@ -77,9 +65,40 @@
 
           <section class="setup-section">
             <div class="section-row">
+              <h3>Source</h3>
+              <button id="load-manifest-btn" class="secondary">Reload participants</button>
+            </div>
+            <div class="source-card">
+              <label class="checkbox-label source-option">
+                <input id="custom-manifest-toggle" type="checkbox" />
+                Use a custom manifest CSV
+              </label>
+              <div class="source-summary" id="source-summary">Default: scoring_manifest_demo.csv</div>
+              <label id="custom-manifest-field" class="custom-field hidden">
+                Manifest URL
+                <input id="manifest-url" type="text" autocomplete="off" value="scoring_manifest_demo.csv" />
+              </label>
+            </div>
+          </section>
+
+          <section class="setup-section">
+            <h3>Tasks</h3>
+            <div class="task-check-grid">
+              <label class="task-option">
+                <input id="task-filter-l2" type="checkbox" checked />
+                <span>L2-to-L1 translation</span>
+              </label>
+              <label class="task-option">
+                <input id="task-filter-picture" type="checkbox" checked />
+                <span>Picture Naming</span>
+              </label>
+            </div>
+          </section>
+
+          <section class="setup-section">
+            <div class="section-row">
               <h3>Participants</h3>
               <div class="participant-actions">
-                <button id="load-manifest-btn" class="secondary">Load manifest</button>
                 <button id="select-all-btn" class="secondary" disabled>Select all</button>
                 <button id="clear-all-btn" class="secondary" disabled>Clear</button>
               </div>

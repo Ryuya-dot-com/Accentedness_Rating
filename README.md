@@ -59,7 +59,7 @@ Required columns:
 
 - `participant_id`
 - `task`: `l2_to_l1` or `picture_naming`
-- `audio_file` or `audio_url`
+- `recording_file`, `audio_file`, or `audio_url`
 
 Recommended columns:
 

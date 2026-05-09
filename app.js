@@ -1,10 +1,10 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.0";
+  const VERSION = "production_scoring_v0.5.1";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
-  const AUDIO_FILE_COLUMNS = ["audio_file", "recording_file", "file", "filename", "path"];
+  const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
   const IMAGE_URL_COLUMNS = ["image_url", "picture_url", "stimulus_image_url"];
   const IMAGE_FILE_COLUMNS = ["image_file", "picture_file", "stimulus_image", "image"];
   const EXPORT_COLUMNS = [

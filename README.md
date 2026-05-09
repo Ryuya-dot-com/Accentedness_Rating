@@ -1,1 +1,103 @@
-# Accentedness_Rating
+# Production Scoring Platform
+
+Static browser scorer for participant recordings from:
+
+- L2-to-L1 translation
+- Picture Naming
+
+It is modeled after the workflow in [Variability_Scoring](https://github.com/Ryuya-dot-com/Variability_Scoring): raters listen to each recording, verify or correct the response onset, assign an accuracy score, and export scoring data.
+
+## Entry Point
+
+```text
+Production_Scoring_Platform/index.html
+```
+
+Local preview from `Experiment/`:
+
+```sh
+python3 -m http.server 8765
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8765/Production_Scoring_Platform/
+```
+
+## Manifest Workflow
+
+The platform is CSV-driven. Upload recordings to GitHub Pages, raw GitHub, or another static host, then point the setup screen to a manifest CSV.
+
+Required columns:
+
+- `participant_id`
+- `task`: `l2_to_l1` or `picture_naming`
+- `audio_file` or `audio_url`
+
+Recommended columns:
+
+- `trial_number`
+- `target_word`
+- `expected_response`
+- `expected_language`
+- `stimulus_end_ms` for L2-to-L1 latency reference
+- `image_onset_ms_rel` for Picture Naming latency reference
+- `onset_ms_auto`
+- `latency_ms_auto`
+- `condition`
+- `accent_condition`
+- `list`
+- `word_number`
+- `image_file` or `image_url` for Picture Naming
+
+Relative paths in `audio_file` and `image_file` are resolved relative to the manifest URL.
+
+See:
+
+```text
+scoring_manifest_template.csv
+scoring_manifest_demo.csv
+```
+
+## Scoring
+
+Accuracy scores:
+
+- `NR`: no response
+- `0`: incorrect
+- `0.5`: partially correct
+- `1`: correct
+
+Onset statuses:
+
+- `confirmed`
+- `corrected`
+- `manual`
+- `no_speech`
+
+For L2-to-L1, `latency_ms_rater = onset_ms_rater - stimulus_end_ms`.
+
+For Picture Naming, `latency_ms_rater = onset_ms_rater - image_onset_ms_rel`.
+
+## Output
+
+Exports include one row per prepared recording, including unscored rows. Main output fields include:
+
+- `rater_id`
+- `session_id`
+- `participant_id`
+- `task`
+- `trial_number`
+- `target_word`
+- `expected_response`
+- `audio_url`
+- `accuracy_score`
+- `onset_status`
+- `onset_ms_auto`
+- `onset_ms_rater`
+- `latency_ms_auto`
+- `latency_ms_rater`
+- `notes`
+
+Progress is saved in browser `localStorage` for the same rater, session, manifest URL, task filter, and participant set.

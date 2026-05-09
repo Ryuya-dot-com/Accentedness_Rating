@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Production Scoring Platform</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Accentedness project</p>
+          <h1>Production Scoring Platform</h1>
+        </div>
+        <div class="version" id="version-label"></div>
+      </header>
+
+      <section class="panel setup-panel" id="setup-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Scoring setup</h2>
+            <p>L2-to-L1 translation and Picture Naming response scoring.</p>
+          </div>
+          <div class="setup-status" id="setup-status">Waiting for manifest</div>
+        </div>
+
+        <div class="status-grid" aria-live="polite">
+          <div>
+            <span>Rows</span>
+            <strong id="status-rows">0</strong>
+          </div>
+          <div>
+            <span>Participants</span>
+            <strong id="status-participants">0</strong>
+          </div>
+          <div>
+            <span>Assigned</span>
+            <strong id="status-assigned">0</strong>
+          </div>
+          <div>
+            <span>Trials</span>
+            <strong id="status-trials">0</strong>
+          </div>
+        </div>
+
+        <div class="setup-layout">
+          <section class="setup-section">
+            <h3>Rater</h3>
+            <div class="form-grid">
+              <label>
+                Rater ID
+                <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
+              </label>
+              <label>
+                Session label
+                <input id="session-id" type="text" autocomplete="off" placeholder="session01" />
+              </label>
+              <label>
+                Manifest URL
+                <input id="manifest-url" type="text" autocomplete="off" value="scoring_manifest_demo.csv" />
+              </label>
+              <label>
+                Task
+                <select id="task-filter">
+                  <option value="all">All tasks</option>
+                  <option value="l2_to_l1">L2-to-L1 translation</option>
+                  <option value="picture_naming">Picture Naming</option>
+                </select>
+              </label>
+              <label class="checkbox-label">
+                <input id="shuffle-trials" type="checkbox" checked />
+                Shuffle trials within participant
+              </label>
+            </div>
+          </section>
+
+          <section class="setup-section">
+            <div class="section-row">
+              <h3>Participants</h3>
+              <div class="participant-actions">
+                <button id="load-manifest-btn" class="secondary">Load manifest</button>
+                <button id="select-all-btn" class="secondary" disabled>Select all</button>
+                <button id="clear-all-btn" class="secondary" disabled>Clear</button>
+              </div>
+            </div>
+            <div id="participant-grid" class="participant-grid empty">No manifest loaded.</div>
+          </section>
+        </div>
+
+        <div class="actions">
+          <button id="prepare-btn" disabled>Prepare scoring</button>
+          <button id="start-btn" disabled>Start scoring</button>
+          <button id="export-csv-btn" class="secondary" disabled>Export CSV</button>
+          <button id="export-json-btn" class="secondary" disabled>Export JSON</button>
+        </div>
+
+        <pre id="setup-log" class="log" aria-live="polite"></pre>
+      </section>
+
+      <section class="panel scoring-panel hidden" id="scoring-panel">
+        <div class="scoring-topbar">
+          <div>
+            <p class="eyebrow" id="trial-phase">Scoring</p>
+            <h2 id="trial-title">Trial</h2>
+          </div>
+          <div class="topbar-actions">
+            <button id="back-btn" class="secondary">Back</button>
+            <button id="prev-btn" class="secondary">Prev</button>
+            <button id="next-unscored-btn" class="secondary">Next open</button>
+            <button id="next-btn">Next</button>
+          </div>
+        </div>
+
+        <div class="progress-track" aria-hidden="true">
+          <div id="progress-fill"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0 of 0 scored</div>
+        <div id="trial-strip" class="trial-strip" aria-label="Trial navigation"></div>
+
+        <div class="scoring-layout">
+          <aside class="trial-rail">
+            <div>
+              <span>Participant</span>
+              <strong id="rail-participant">-</strong>
+            </div>
+            <div>
+              <span>Task</span>
+              <strong id="rail-task">-</strong>
+            </div>
+            <div>
+              <span>Trial</span>
+              <strong id="rail-trial">-</strong>
+            </div>
+            <div>
+              <span>Complete</span>
+              <strong id="rail-saved">0</strong>
+            </div>
+          </aside>
+
+          <div class="workspace">
+            <section class="stimulus-card">
+              <div>
+                <span id="task-badge" class="task-badge">Task</span>
+                <h3 id="target-word">Target</h3>
+                <p id="expected-response"></p>
+                <p id="trial-metadata"></p>
+              </div>
+              <div id="image-slot" class="image-slot hidden">
+                <img id="stimulus-image" alt="" />
+              </div>
+            </section>
+
+            <section class="trial-checks" aria-live="polite">
+              <div class="check-card" id="accuracy-check">
+                <span>Accuracy</span>
+                <strong>Pending</strong>
+              </div>
+              <div class="check-card" id="onset-check">
+                <span>Onset</span>
+                <strong>Pending</strong>
+              </div>
+              <div class="check-card" id="latency-check">
+                <span>Latency</span>
+                <strong>-</strong>
+              </div>
+            </section>
+
+            <section class="audio-card">
+              <div class="audio-actions">
+                <button id="play-btn">Play</button>
+                <button id="stop-btn" class="secondary">Stop</button>
+                <button id="play-onset-btn" class="secondary">From onset</button>
+                <label>
+                  Speed
+                  <select id="speed-select">
+                    <option value="0.75">0.75x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.25">1.25x</option>
+                    <option value="1.5">1.5x</option>
+                  </select>
+                </label>
+              </div>
+              <canvas id="waveform-canvas" height="150"></canvas>
+              <div class="audio-info">
+                <span id="audio-time">0.000s / 0.000s</span>
+                <span id="audio-status">No audio loaded.</span>
+              </div>
+            </section>
+
+            <section class="response-grid">
+              <fieldset class="score-block">
+                <legend>Accuracy</legend>
+                <div class="score-buttons" id="score-buttons">
+                  <button data-score="NR" class="score-button">NR</button>
+                  <button data-score="0" class="score-button">0</button>
+                  <button data-score="0.5" class="score-button">0.5</button>
+                  <button data-score="1" class="score-button">1</button>
+                </div>
+                <p id="score-hint" class="hint"></p>
+              </fieldset>
+
+              <fieldset class="score-block">
+                <legend>Onset</legend>
+                <div class="onset-buttons" id="onset-buttons">
+                  <button data-onset="confirmed" class="onset-button secondary">Confirm</button>
+                  <button data-onset="corrected" class="onset-button secondary">Correct</button>
+                  <button data-onset="manual" class="onset-button secondary">Manual set</button>
+                  <button data-onset="no_speech" class="onset-button secondary">No speech</button>
+                </div>
+                <div class="onset-input-row">
+                  <label>
+                    Onset ms
+                    <input id="onset-input" type="number" min="0" step="0.1" />
+                  </label>
+                  <button id="apply-onset-btn" class="secondary">Apply</button>
+                </div>
+              </fieldset>
+            </section>
+
+            <label class="notes-box">
+              Notes
+              <textarea id="notes-input" rows="3" placeholder="Optional scoring notes"></textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

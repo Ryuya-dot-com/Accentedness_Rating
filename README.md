@@ -70,6 +70,7 @@ Recommended columns:
 - `stimulus_end_ms` for L2-to-L1 latency reference
 - `image_onset_ms_rel` for Picture Naming latency reference
 - `onset_ms_auto`
+- `offset_ms_auto`
 - `latency_ms_auto`
 - `condition`
 - `accent_condition`
@@ -94,6 +95,14 @@ Accuracy scores:
 - `0`: incorrect
 - `0.5`: partially correct
 - `1`: correct
+
+Timing controls:
+
+- Red marker: response onset.
+- Orange marker: response offset.
+- Click `Move onset` or `Move offset`, then click or drag on the waveform to set the marker.
+- Drag an existing marker directly to adjust it.
+- `Clear offset` removes the rater offset marker when offset scoring is not needed.
 
 Onset statuses:
 
@@ -122,6 +131,10 @@ Exports include one row per prepared recording, including unscored rows. Main ou
 - `onset_status`
 - `onset_ms_auto`
 - `onset_ms_rater`
+- `offset_status`
+- `offset_ms_auto`
+- `offset_ms_rater`
+- `duration_ms_rater`
 - `latency_ms_auto`
 - `latency_ms_rater`
 - `notes`

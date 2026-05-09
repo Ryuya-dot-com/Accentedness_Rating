@@ -192,6 +192,10 @@
                 <span>Onset</span>
                 <strong>Pending</strong>
               </div>
+              <div class="check-card" id="offset-check">
+                <span>Offset</span>
+                <strong>-</strong>
+              </div>
               <div class="check-card" id="latency-check">
                 <span>Latency</span>
                 <strong>-</strong>
@@ -203,6 +207,8 @@
                 <button id="play-btn">Play</button>
                 <button id="stop-btn" class="secondary">Stop</button>
                 <button id="play-onset-btn" class="secondary">From onset</button>
+                <button id="set-onset-marker-btn" class="secondary marker-button" data-marker="onset">Move onset</button>
+                <button id="set-offset-marker-btn" class="secondary marker-button" data-marker="offset">Move offset</button>
                 <label>
                   Speed
                   <select id="speed-select">
@@ -233,7 +239,7 @@
               </fieldset>
 
               <fieldset class="score-block">
-                <legend>Onset</legend>
+                <legend>Timing</legend>
                 <div class="onset-buttons" id="onset-buttons">
                   <button data-onset="confirmed" class="onset-button secondary">Confirm</button>
                   <button data-onset="corrected" class="onset-button secondary">Correct</button>
@@ -245,7 +251,12 @@
                     Onset ms
                     <input id="onset-input" type="number" min="0" step="0.1" />
                   </label>
+                  <label>
+                    Offset ms
+                    <input id="offset-input" type="number" min="0" step="0.1" />
+                  </label>
                   <button id="apply-onset-btn" class="secondary">Apply</button>
+                  <button id="clear-offset-btn" class="secondary">Clear offset</button>
                 </div>
               </fieldset>
             </section>

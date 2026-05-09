@@ -510,7 +510,7 @@ label {
 .trial-checks {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 18px;
   padding: 12px;
 }
@@ -632,6 +632,10 @@ label {
   cursor: crosshair;
 }
 
+#waveform-canvas.marker-dragging {
+  cursor: ew-resize;
+}
+
 .audio-info {
   color: var(--ink-muted);
   display: flex;
@@ -687,7 +691,8 @@ label {
 }
 
 .score-button.active,
-.onset-button.active {
+.onset-button.active,
+.marker-button.active {
   box-shadow: 0 0 0 3px rgba(23, 107, 112, 0.25), inset 0 0 0 2px #ffffff;
 }
 
@@ -702,7 +707,7 @@ label {
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto;
   margin-top: 12px;
 }
 
@@ -734,6 +739,10 @@ label {
   .trial-rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     position: static;
+  }
+
+  .onset-input-row {
+    grid-template-columns: 1fr;
   }
 
   .progress-text {

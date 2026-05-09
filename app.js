@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.4.0";
+  const VERSION = "production_scoring_v0.5.0";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["audio_file", "recording_file", "file", "filename", "path"];
@@ -13,6 +13,7 @@
     "expected_response", "expected_language", "audio_url", "source_path",
     "image_url", "condition", "accent_condition", "list", "word_number",
     "accuracy_score", "onset_status", "onset_ms_auto", "onset_ms_rater",
+    "offset_status", "offset_ms_auto", "offset_ms_rater", "duration_ms_rater",
     "reference_ms", "latency_ms_auto", "latency_ms_rater", "notes"
   ];
 
@@ -71,11 +72,16 @@
     audioStatus: document.getElementById("audio-status"),
     accuracyCheck: document.getElementById("accuracy-check"),
     onsetCheck: document.getElementById("onset-check"),
+    offsetCheck: document.getElementById("offset-check"),
     latencyCheck: document.getElementById("latency-check"),
     scoreButtons: document.getElementById("score-buttons"),
     onsetButtons: document.getElementById("onset-buttons"),
     onsetInput: document.getElementById("onset-input"),
+    offsetInput: document.getElementById("offset-input"),
     applyOnsetBtn: document.getElementById("apply-onset-btn"),
+    setOnsetMarkerBtn: document.getElementById("set-onset-marker-btn"),
+    setOffsetMarkerBtn: document.getElementById("set-offset-marker-btn"),
+    clearOffsetBtn: document.getElementById("clear-offset-btn"),
     scoreHint: document.getElementById("score-hint"),
     notesInput: document.getElementById("notes-input"),
   };
@@ -91,7 +97,8 @@
     currentAudio: null,
     animationId: null,
     waveform: null,
-    manualOnsetMode: false,
+    markerMode: null,
+    draggingMarker: null,
     audioReady: false,
   };
 
@@ -297,6 +304,7 @@
       list: valueFrom(row, ["list", "list_number"]),
       word_number: valueFrom(row, ["word_number", "word_id", "item_id"]),
       onset_ms_auto: numberFrom(row, ["onset_ms_auto", "onset_ms_from_recording_start", "auto_onset_ms"]),
+      offset_ms_auto: numberFrom(row, ["offset_ms_auto", "offset_ms_from_recording_start", "auto_offset_ms", "response_offset_ms", "speech_offset_ms"]),
       reference_ms: referenceMs,
       latency_ms_auto: numberFrom(row, ["latency_ms_auto", "latency_ms", "latency_ms_from_playback_end", "latency_ms_from_image_onset"]),
       raw: row,
@@ -569,6 +577,8 @@
     return Boolean(
       score.accuracy_score != null ||
       score.onset_status ||
+      score.offset_status ||
+      score.offset_ms_rater != null ||
       score.notes
     );
   }
@@ -578,6 +588,14 @@
     if (onsetMs == null || item.reference_ms == null) return null;
     const latency = Number(onsetMs) - Number(item.reference_ms);
     return Number.isFinite(latency) ? latency : null;
+  }
+
+  function durationFor(item, score) {
+    const onsetMs = markerOnsetMs(item, score);
+    const offsetMs = markerOffsetMs(item, score);
+    if (onsetMs == null || offsetMs == null) return null;
+    const duration = Number(offsetMs) - Number(onsetMs);
+    return Number.isFinite(duration) && duration >= 0 ? duration : null;
   }
 
   function completionLabel(item) {
@@ -600,8 +618,7 @@
   function showItem(index) {
     cleanupAudio();
     state.currentIndex = Math.max(0, Math.min(index, state.items.length - 1));
-    state.manualOnsetMode = false;
-    els.waveformCanvas.classList.remove("manual-onset");
+    setMarkerMode(null);
     saveSession();
 
     const item = currentItem();
@@ -641,6 +658,9 @@
     els.onsetInput.value = score.onset_ms_rater != null
       ? score.onset_ms_rater
       : (item.onset_ms_auto != null ? item.onset_ms_auto.toFixed(1) : "");
+    els.offsetInput.value = score.offset_ms_rater != null
+      ? score.offset_ms_rater
+      : (item.offset_ms_auto != null ? item.offset_ms_auto.toFixed(1) : "");
 
     updateActiveButtons();
     updateTrialChecks();
@@ -661,11 +681,24 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", active ? "true" : "false");
     });
+    [els.setOnsetMarkerBtn, els.setOffsetMarkerBtn].forEach((button) => {
+      const active = state.markerMode === button.dataset.marker;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
   }
 
   function setCheck(el, stateName, label) {
     el.dataset.state = stateName;
     el.querySelector("strong").textContent = label;
+  }
+
+  function setMarkerMode(marker) {
+    state.markerMode = marker;
+    state.draggingMarker = null;
+    els.waveformCanvas.classList.toggle("manual-onset", Boolean(marker));
+    els.waveformCanvas.classList.remove("marker-dragging");
+    updateActiveButtons();
   }
 
   function updateTrialChecks() {
@@ -677,9 +710,15 @@
       ? score.onset_status === "no_speech"
       : Boolean(score.onset_status);
     const latency = latencyFor(item, score);
+    const offsetMs = markerOffsetMs(item, score);
+    const duration = durationFor(item, score);
 
     setCheck(els.accuracyCheck, hasAccuracy ? "done" : "pending", hasAccuracy ? String(score.accuracy_score) : "Pending");
     setCheck(els.onsetCheck, hasOnset ? "done" : "pending", hasOnset ? score.onset_status.replace("_", " ") : "Pending");
+    const offsetLabel = offsetMs == null
+      ? "-"
+      : `${Number(offsetMs).toFixed(1)} ms${duration == null ? "" : ` (${duration.toFixed(1)} ms)`}`;
+    setCheck(els.offsetCheck, offsetMs == null ? "neutral" : "done", offsetLabel);
     setCheck(els.latencyCheck, latency == null ? "neutral" : "done", latency == null ? "-" : `${latency.toFixed(1)} ms`);
     els.playOnsetBtn.disabled = !state.audioReady || markerOnsetMs(item, score) == null;
   }
@@ -693,6 +732,8 @@
       state.currentAudio = null;
     }
     state.audioReady = false;
+    state.draggingMarker = null;
+    els.waveformCanvas.classList.remove("marker-dragging");
   }
 
   function loadAudio(item) {
@@ -785,6 +826,14 @@
     return item.onset_ms_auto;
   }
 
+  function markerOffsetMs(item, score) {
+    if (!item) return null;
+    if (score.accuracy_score === "NR" || score.onset_status === "no_speech") return null;
+    if (score.offset_status === "cleared") return null;
+    if (score.offset_ms_rater != null && score.offset_ms_rater !== "") return Number(score.offset_ms_rater);
+    return item.offset_ms_auto;
+  }
+
   function drawWaveform() {
     const canvas = els.waveformCanvas;
     const rect = canvas.getBoundingClientRect();
@@ -835,6 +884,7 @@
 
     drawMarker(ctx, item.reference_ms, durationMs, width, height, "#2d8b57", "ref");
     drawMarker(ctx, markerOnsetMs(item, score), durationMs, width, height, "#d14646", "onset");
+    drawMarker(ctx, markerOffsetMs(item, score), durationMs, width, height, "#b7791f", "offset");
 
     if (state.currentAudio) {
       drawMarker(ctx, state.currentAudio.currentTime * 1000, durationMs, width, height, "#1f6feb", "");
@@ -921,7 +971,11 @@
     if (scoreValue === "NR") {
       patch.onset_status = "no_speech";
       patch.onset_ms_rater = null;
+      patch.offset_status = "";
+      patch.offset_ms_rater = null;
       els.onsetInput.value = "";
+      els.offsetInput.value = "";
+      setMarkerMode(null);
     }
     patchScore(item, patch);
     updateActiveButtons();
@@ -933,8 +987,7 @@
     const item = currentItem();
     if (!item) return;
     const patch = { onset_status: status };
-    state.manualOnsetMode = status === "manual" || status === "corrected";
-    els.waveformCanvas.classList.toggle("manual-onset", state.manualOnsetMode);
+    setMarkerMode(status === "manual" || status === "corrected" ? "onset" : null);
     if (status === "confirmed") {
       const score = scoreFor(item);
       const ms = score.onset_ms_rater != null ? score.onset_ms_rater : item.onset_ms_auto;
@@ -945,7 +998,10 @@
     }
     if (status === "no_speech") {
       patch.onset_ms_rater = null;
+      patch.offset_status = "";
+      patch.offset_ms_rater = null;
       els.onsetInput.value = "";
+      els.offsetInput.value = "";
     }
     patchScore(item, patch);
     updateActiveButtons();
@@ -960,10 +1016,43 @@
       onset_status: status,
       onset_ms_rater: Number(ms),
     });
-    state.manualOnsetMode = status === "manual" || status === "corrected";
-    els.waveformCanvas.classList.toggle("manual-onset", state.manualOnsetMode);
+    const score = scoreFor(item);
+    if (score.offset_ms_rater != null && Number(score.offset_ms_rater) < Number(ms)) {
+      patchScore(item, { offset_ms_rater: Number(ms), offset_status: score.offset_status || "manual" });
+      els.offsetInput.value = Number(ms).toFixed(1);
+    }
+    setMarkerMode(status === "manual" || status === "corrected" ? "onset" : null);
     els.onsetInput.value = Number(ms).toFixed(1);
     updateActiveButtons();
+    updateTrialChecks();
+    drawWaveform();
+  }
+
+  function applyManualOffset(ms, status = "manual") {
+    const item = currentItem();
+    if (!item || ms == null || !Number.isFinite(Number(ms))) return;
+    const score = scoreFor(item);
+    const onsetMs = markerOnsetMs(item, score);
+    const boundedMs = onsetMs != null ? Math.max(Number(onsetMs), Number(ms)) : Number(ms);
+    patchScore(item, {
+      offset_status: status,
+      offset_ms_rater: boundedMs,
+    });
+    els.offsetInput.value = boundedMs.toFixed(1);
+    updateActiveButtons();
+    updateTrialChecks();
+    drawWaveform();
+  }
+
+  function clearOffset() {
+    const item = currentItem();
+    if (!item) return;
+    patchScore(item, {
+      offset_status: "cleared",
+      offset_ms_rater: null,
+    });
+    els.offsetInput.value = "";
+    if (state.markerMode === "offset") setMarkerMode(null);
     updateTrialChecks();
     drawWaveform();
   }
@@ -975,6 +1064,63 @@
     const rect = els.waveformCanvas.getBoundingClientRect();
     const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
     return (x / rect.width) * audio.duration * 1000;
+  }
+
+  function markerNearPointer(event) {
+    const item = currentItem();
+    const audio = state.currentAudio;
+    if (!item || !audio || !Number.isFinite(audio.duration)) return null;
+    const rect = els.waveformCanvas.getBoundingClientRect();
+    const durationMs = audio.duration * 1000;
+    const score = scoreFor(item);
+    const candidates = [
+      ["onset", markerOnsetMs(item, score)],
+      ["offset", markerOffsetMs(item, score)],
+    ].filter(([, ms]) => ms != null && Number.isFinite(Number(ms)));
+    let nearest = null;
+    candidates.forEach(([marker, ms]) => {
+      const x = rect.left + (Number(ms) / durationMs) * rect.width;
+      const distance = Math.abs(event.clientX - x);
+      if (distance <= 12 && (!nearest || distance < nearest.distance)) {
+        nearest = { marker, distance };
+      }
+    });
+    return nearest ? nearest.marker : null;
+  }
+
+  function applyMarkerAtEvent(marker, event) {
+    const ms = canvasToMs(event);
+    if (ms == null) return;
+    if (marker === "offset") {
+      applyManualOffset(ms);
+    } else {
+      const currentStatus = scoreFor(currentItem()).onset_status;
+      applyManualOnset(ms, currentStatus === "manual" ? "manual" : "corrected");
+    }
+  }
+
+  function startMarkerDrag(event) {
+    if (!state.audioReady) return;
+    const marker = markerNearPointer(event) || state.markerMode;
+    if (!marker) return;
+    event.preventDefault();
+    state.draggingMarker = marker;
+    els.waveformCanvas.classList.add("marker-dragging");
+    els.waveformCanvas.setPointerCapture?.(event.pointerId);
+    applyMarkerAtEvent(marker, event);
+  }
+
+  function continueMarkerDrag(event) {
+    if (!state.draggingMarker) return;
+    event.preventDefault();
+    applyMarkerAtEvent(state.draggingMarker, event);
+  }
+
+  function endMarkerDrag(event) {
+    if (!state.draggingMarker) return;
+    els.waveformCanvas.releasePointerCapture?.(event.pointerId);
+    state.draggingMarker = null;
+    els.waveformCanvas.classList.remove("marker-dragging");
   }
 
   function updateNotes() {
@@ -1049,8 +1195,12 @@
     return state.items.map((item) => {
       const score = scoreFor(item);
       const onsetMs = score.accuracy_score === "NR" ? null : score.onset_ms_rater;
+      const offsetMs = score.accuracy_score === "NR" ? null : score.offset_ms_rater;
       const latencyRater = onsetMs != null && item.reference_ms != null
         ? Number(onsetMs) - Number(item.reference_ms)
+        : "";
+      const durationRater = onsetMs != null && offsetMs != null
+        ? Number(offsetMs) - Number(onsetMs)
         : "";
       return {
         platform_version: VERSION,
@@ -1076,6 +1226,10 @@
         onset_status: score.onset_status || "",
         onset_ms_auto: item.onset_ms_auto != null ? item.onset_ms_auto : "",
         onset_ms_rater: onsetMs != null ? Number(onsetMs).toFixed(1) : "",
+        offset_status: score.offset_status || "",
+        offset_ms_auto: item.offset_ms_auto != null ? item.offset_ms_auto : "",
+        offset_ms_rater: offsetMs != null ? Number(offsetMs).toFixed(1) : "",
+        duration_ms_rater: durationRater !== "" && Number.isFinite(durationRater) ? durationRater.toFixed(1) : "",
         reference_ms: item.reference_ms != null ? item.reference_ms : "",
         latency_ms_auto: item.latency_ms_auto != null ? item.latency_ms_auto : "",
         latency_ms_rater: latencyRater !== "" ? latencyRater.toFixed(1) : "",
@@ -1173,14 +1327,18 @@
     if (button) setOnsetStatus(button.dataset.onset);
   });
   els.applyOnsetBtn.addEventListener("click", () => {
-    const value = Number.parseFloat(els.onsetInput.value);
-    if (Number.isFinite(value)) applyManualOnset(value);
+    const onsetValue = Number.parseFloat(els.onsetInput.value);
+    const offsetValue = Number.parseFloat(els.offsetInput.value);
+    if (Number.isFinite(onsetValue)) applyManualOnset(onsetValue);
+    if (Number.isFinite(offsetValue)) applyManualOffset(offsetValue);
   });
-  els.waveformCanvas.addEventListener("click", (event) => {
-    if (!state.manualOnsetMode) return;
-    const ms = canvasToMs(event);
-    if (ms != null) applyManualOnset(ms, scoreFor(currentItem()).onset_status || "manual");
-  });
+  els.setOnsetMarkerBtn.addEventListener("click", () => setMarkerMode(state.markerMode === "onset" ? null : "onset"));
+  els.setOffsetMarkerBtn.addEventListener("click", () => setMarkerMode(state.markerMode === "offset" ? null : "offset"));
+  els.clearOffsetBtn.addEventListener("click", clearOffset);
+  els.waveformCanvas.addEventListener("pointerdown", startMarkerDrag);
+  els.waveformCanvas.addEventListener("pointermove", continueMarkerDrag);
+  els.waveformCanvas.addEventListener("pointerup", endMarkerDrag);
+  els.waveformCanvas.addEventListener("pointercancel", endMarkerDrag);
   els.notesInput.addEventListener("input", updateNotes);
   els.exportCsvBtn.addEventListener("click", exportCsv);
   els.exportJsonBtn.addEventListener("click", exportJson);

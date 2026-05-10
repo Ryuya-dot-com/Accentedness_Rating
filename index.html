@@ -20,9 +20,9 @@
         <div class="panel-heading">
           <div>
             <h2>Scoring setup</h2>
-            <p>Choose a GitHub-hosted recording set, then select participant IDs for scoring.</p>
+            <p>Enter the rater ID, choose the test and participant IDs, then start scoring the uploaded recordings.</p>
           </div>
-          <div class="setup-status" id="setup-status">Loading participants</div>
+          <div class="setup-status" id="setup-status">Loading recordings</div>
         </div>
 
         <div class="status-grid" aria-live="polite">
@@ -35,11 +35,11 @@
             <strong id="status-participants">0</strong>
           </div>
           <div>
-            <span>Selected</span>
+            <span>Test</span>
             <strong id="status-assigned">0</strong>
           </div>
           <div>
-            <span>Trials</span>
+            <span>Queue</span>
             <strong id="status-trials">0</strong>
           </div>
         </div>
@@ -53,39 +53,28 @@
                 <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
               </label>
               <label>
-                Scoring round
-                <select id="session-id">
-                  <option value="round_01">Round 01</option>
-                  <option value="round_02">Round 02</option>
-                  <option value="adjudication">Adjudication</option>
-                  <option value="pilot_demo">Pilot / demo</option>
+                Test to score
+                <select id="test-select">
+                  <option value="all">All production tests</option>
+                  <option value="picture_naming">Picture Naming Task</option>
+                  <option value="l2_to_l1">L2-to-L1 Translation Task</option>
                 </select>
-                <span class="field-note">Rater work batch for saved progress and exports.</span>
               </label>
-              <label class="checkbox-label">
-                <input id="shuffle-trials" type="checkbox" checked />
-                Shuffle recordings within participant
-              </label>
+              <input id="session-id" type="hidden" value="auto" />
             </div>
           </section>
 
           <section class="setup-section">
             <div class="section-row">
-              <h3>Participant recordings</h3>
-              <button id="load-manifest-btn" class="secondary">Reload participant list</button>
+              <h3>Recording source</h3>
+              <button id="load-manifest-btn" class="secondary">Reload recordings</button>
             </div>
             <div class="source-card primary-source">
               <div class="source-heading">
                 <p class="source-kicker">GitHub recording set</p>
-                <h4>Select dataset and participant IDs</h4>
-                <p>Recordings are loaded from the scoring manifest and grouped by uploaded dataset.</p>
+                <h4>Uploaded scoring manifest</h4>
+                <p>Condition, participant, and test-session metadata are kept in the output file.</p>
               </div>
-              <label class="dataset-control">
-                Dataset
-                <select id="dataset-select" disabled>
-                  <option value="all">All uploaded datasets</option>
-                </select>
-              </label>
               <div class="source-summary" id="source-summary">Default: scoring_manifest_demo.csv</div>
 
               <details class="manifest-details">
@@ -107,22 +96,8 @@
           </section>
 
           <section class="setup-section">
-            <h3>Tasks</h3>
-            <div class="task-check-grid">
-              <label class="task-option">
-                <input id="task-filter-l2" type="checkbox" checked />
-                <span>L2-to-L1 translation</span>
-              </label>
-              <label class="task-option">
-                <input id="task-filter-picture" type="checkbox" checked />
-                <span>Picture Naming</span>
-              </label>
-            </div>
-          </section>
-
-          <section class="setup-section">
             <div class="section-row">
-              <h3>Participant IDs from selected dataset</h3>
+              <h3>Participant IDs</h3>
               <div class="participant-actions">
                 <button id="select-all-btn" class="secondary" disabled>Select all</button>
                 <button id="clear-all-btn" class="secondary" disabled>Clear</button>
@@ -133,7 +108,7 @@
         </div>
 
         <div class="actions">
-          <button id="prepare-btn" disabled>Prepare selected recordings</button>
+          <button id="prepare-btn" disabled>Prepare scoring queue</button>
           <button id="start-btn" disabled>Start scoring</button>
           <button id="export-csv-btn" class="secondary" disabled>Export CSV</button>
           <button id="export-json-btn" class="secondary" disabled>Export JSON</button>

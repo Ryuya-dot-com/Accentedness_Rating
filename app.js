@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.3";
+  const VERSION = "production_scoring_v0.5.4";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -32,10 +32,7 @@
     customManifestField: document.getElementById("custom-manifest-field"),
     sourceSummary: document.getElementById("source-summary"),
     manifestUrl: document.getElementById("manifest-url"),
-    datasetSelect: document.getElementById("dataset-select"),
-    taskFilterL2: document.getElementById("task-filter-l2"),
-    taskFilterPicture: document.getElementById("task-filter-picture"),
-    shuffleTrials: document.getElementById("shuffle-trials"),
+    testSelect: document.getElementById("test-select"),
     loadManifestBtn: document.getElementById("load-manifest-btn"),
     selectAllBtn: document.getElementById("select-all-btn"),
     clearAllBtn: document.getElementById("clear-all-btn"),
@@ -90,7 +87,6 @@
   const state = {
     manifestItems: [],
     manifestUrl: "",
-    selectedDataset: "all",
     assignedParticipants: [],
     items: [],
     currentIndex: 0,
@@ -138,13 +134,11 @@
     return "Task";
   }
 
-  function datasetLabel(value) {
-    const text = String(value || "").trim();
-    if (!text || text === "all") return "All uploaded datasets";
-    return text
-      .replace(/^demo_/, "Demo ")
-      .replace(/_/g, " ")
-      .replace(/\b([a-z])/g, (match) => match.toUpperCase());
+  function selectedTestLabel() {
+    const value = els.testSelect.value;
+    if (value === "l2_to_l1") return "L2-to-L1";
+    if (value === "picture_naming") return "Picture Naming";
+    return "All";
   }
 
   function csvCell(value) {
@@ -337,8 +331,8 @@
 
   function selectedTaskSet() {
     const tasks = new Set();
-    if (els.taskFilterL2.checked) tasks.add("l2_to_l1");
-    if (els.taskFilterPicture.checked) tasks.add("picture_naming");
+    if (els.testSelect.value === "all" || els.testSelect.value === "l2_to_l1") tasks.add("l2_to_l1");
+    if (els.testSelect.value === "all" || els.testSelect.value === "picture_naming") tasks.add("picture_naming");
     return tasks;
   }
 
@@ -346,57 +340,11 @@
     return [...selectedTaskSet()].sort().join("|") || "none";
   }
 
-  function selectedDatasetKey() {
-    return els.datasetSelect?.value || "all";
-  }
-
   function syncCustomManifestVisibility() {
     els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
     els.sourceSummary.textContent = els.customManifestToggle.checked
       ? "Custom manifest enabled"
       : `Default: ${DEFAULT_MANIFEST_URL}`;
-  }
-
-  function renderDatasetOptions(previousValue = state.selectedDataset || "all") {
-    const counts = new Map();
-    state.manifestItems.forEach((item) => {
-      const key = item.dataset_id || "default";
-      const entry = counts.get(key) || {
-        rows: 0,
-        participants: new Set(),
-        testSessions: new Set(),
-      };
-      entry.rows += 1;
-      entry.participants.add(item.participant_id);
-      if (item.test_session) entry.testSessions.add(item.test_session);
-      counts.set(key, entry);
-    });
-
-    els.datasetSelect.innerHTML = "";
-    const totalOption = document.createElement("option");
-    totalOption.value = "all";
-    totalOption.textContent = `All uploaded datasets (${state.manifestItems.length} recordings)`;
-    els.datasetSelect.append(totalOption);
-
-    [...counts.entries()]
-      .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
-      .forEach(([key, info]) => {
-        const option = document.createElement("option");
-        const sessions = [...info.testSessions].sort().join("/");
-        option.value = key;
-        option.textContent = [
-          datasetLabel(key),
-          sessions ? `test ${sessions}` : "",
-          `${info.participants.size} participant${info.participants.size === 1 ? "" : "s"}`,
-          `${info.rows} recordings`,
-        ].filter(Boolean).join(" · ");
-        els.datasetSelect.append(option);
-      });
-
-    const values = [...els.datasetSelect.options].map((option) => option.value);
-    els.datasetSelect.value = values.includes(previousValue) ? previousValue : "all";
-    state.selectedDataset = els.datasetSelect.value;
-    els.datasetSelect.disabled = state.manifestItems.length === 0;
   }
 
   async function fetchCsv(url) {
@@ -416,7 +364,6 @@
     if (!items.length) {
       state.manifestItems = [];
       state.manifestUrl = "";
-      renderDatasetOptions("all");
       renderParticipants();
       throw new Error("Manifest rows need participant_id and audio_file or audio_url.");
     }
@@ -426,7 +373,6 @@
     state.items = [];
     state.assignedParticipants = [];
     state.scores = {};
-    renderDatasetOptions(state.selectedDataset);
     updateSetupSummary();
     renderParticipants();
     els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_MANIFEST_URL}`;
@@ -444,9 +390,19 @@
 
   function filteredManifestItems() {
     const tasks = selectedTaskSet();
-    const dataset = selectedDatasetKey();
     if (!tasks.size) return [];
-    return state.manifestItems.filter((item) => tasks.has(item.task) && (dataset === "all" || item.dataset_id === dataset));
+    return state.manifestItems.filter((item) => tasks.has(item.task));
+  }
+
+  function clearPreparedQueue() {
+    state.items = [];
+    state.assignedParticipants = [];
+    state.scores = {};
+    state.currentIndex = 0;
+    state.sessionKey = "";
+    els.startBtn.disabled = true;
+    els.exportCsvBtn.disabled = true;
+    els.exportJsonBtn.disabled = true;
   }
 
   function renderParticipants() {
@@ -466,7 +422,7 @@
     els.participantGrid.innerHTML = "";
     els.participantGrid.classList.toggle("empty", participants.length === 0);
     if (!participants.length) {
-      els.participantGrid.textContent = state.manifestItems.length ? "No participants for the checked tasks." : "Loading participants...";
+      els.participantGrid.textContent = state.manifestItems.length ? "No participants for the selected test." : "Loading participants...";
     } else {
       participants.forEach(([participantId, info]) => {
         const label = document.createElement("label");
@@ -474,8 +430,11 @@
         const input = document.createElement("input");
         input.type = "checkbox";
         input.value = participantId;
-        input.checked = true;
-        input.addEventListener("change", updateSetupSummary);
+        input.checked = false;
+        input.addEventListener("change", () => {
+          clearPreparedQueue();
+          updateSetupSummary();
+        });
         const text = document.createTextNode(participantId);
         const meta = document.createElement("span");
         meta.textContent = [
@@ -506,7 +465,7 @@
 
     els.statusRows.textContent = String(items.length);
     els.statusParticipants.textContent = String(participants.size);
-    els.statusAssigned.textContent = String(assigned.length);
+    els.statusAssigned.textContent = selectedTestLabel();
     els.statusTrials.textContent = String(trials);
 
     const hasRater = Boolean(els.raterId.value.trim());
@@ -518,10 +477,10 @@
       setSetupStatus("Loading participant list");
     } else if (!taskCount) {
       setSetupStatus("Tasks needed");
-    } else if (!assigned.length) {
-      setSetupStatus("Participants needed");
     } else if (!hasRater) {
       setSetupStatus("Rater needed");
+    } else if (!assigned.length) {
+      setSetupStatus("Participants needed");
     } else if (trials) {
       setSetupStatus("Ready to prepare");
     }
@@ -530,13 +489,29 @@
   function makeSessionKey() {
     const seed = [
       els.raterId.value.trim(),
-      els.sessionId.value.trim(),
       state.manifestUrl,
-      selectedDatasetKey(),
       selectedTaskKey(),
       state.assignedParticipants.join("|"),
     ].join("::");
     return `productionScoring_${hashString(seed)}`;
+  }
+
+  function sessionIdValue() {
+    return els.sessionId.value.trim() || "auto";
+  }
+
+  function queueSeed(raterId, assigned) {
+    return [
+      raterId,
+      state.manifestUrl,
+      selectedTaskKey(),
+      assigned.join("|"),
+    ].join("::");
+  }
+
+  function exportBaseName() {
+    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+    return `${sanitize(els.raterId.value)}_${sanitize(selectedTaskKey())}_${date}_production_scoring`;
   }
 
   function loadSavedSession(key) {
@@ -553,9 +528,8 @@
     localStorage.setItem(state.sessionKey, JSON.stringify({
       platform_version: VERSION,
       rater_id: els.raterId.value.trim(),
-      session_id: els.sessionId.value.trim(),
+      session_id: sessionIdValue(),
       manifest_url: state.manifestUrl,
-      dataset_filter: selectedDatasetKey(),
       task_filter: selectedTaskKey(),
       assigned_participants: state.assignedParticipants,
       current_index: state.currentIndex,
@@ -571,29 +545,17 @@
       els.raterId.focus();
       return;
     }
-    if (!els.sessionId.value.trim()) {
-      els.sessionId.value = `scoring_${new Date().toISOString().slice(0, 10)}`;
-    }
-    state.selectedDataset = selectedDatasetKey();
-
     const assigned = selectedParticipants();
     const assignedSet = new Set(assigned);
-    const itemsByParticipant = new Map();
-    filteredManifestItems()
+    const selectedItems = filteredManifestItems()
       .filter((item) => assignedSet.has(item.participant_id))
-      .forEach((item) => {
-        const bucket = itemsByParticipant.get(item.participant_id) || [];
-        bucket.push(item);
-        itemsByParticipant.set(item.participant_id, bucket);
-      });
-
-    const prepared = [];
-    const seed = `${raterId}_${els.sessionId.value.trim()}_${state.manifestUrl}`;
-    assigned.forEach((participantId) => {
-      const bucket = (itemsByParticipant.get(participantId) || [])
-        .sort((a, b) => Number(a.trial_number) - Number(b.trial_number) || a.row_index - b.row_index);
-      prepared.push(...(els.shuffleTrials.checked ? shuffle(bucket, `${seed}_${participantId}`) : bucket));
-    });
+      .sort((a, b) => (
+        a.participant_id.localeCompare(b.participant_id, undefined, { numeric: true, sensitivity: "base" }) ||
+        Number(a.trial_number) - Number(b.trial_number) ||
+        a.row_index - b.row_index
+      ));
+    const seed = queueSeed(raterId, assigned);
+    const prepared = shuffle(selectedItems, seed);
 
     state.assignedParticipants = assigned;
     state.items = prepared;
@@ -613,9 +575,10 @@
     updateSetupSummary();
     setSetupStatus("Ready", true);
     setLog([
-      `dataset: ${datasetLabel(state.selectedDataset)}`,
+      `test: ${selectedTestLabel()}`,
       `assigned_participants: ${assigned.join(", ")}`,
       `prepared_trials: ${state.items.length}`,
+      `shuffle_seed: rater_id`,
       `saved_scores_loaded: ${Object.keys(state.scores).length}`,
       `session_key: ${state.sessionKey}`,
     ].join("\n"));
@@ -1273,7 +1236,7 @@
 
   function buildExportRows() {
     const raterId = els.raterId.value.trim();
-    const sessionId = els.sessionId.value.trim();
+    const sessionId = sessionIdValue();
     return state.items.map((item) => {
       const score = scoreFor(item);
       const onsetMs = score.accuracy_score === "NR" ? null : score.onset_ms_rater;
@@ -1335,22 +1298,20 @@
   }
 
   function exportCsv() {
-    const base = `${sanitize(els.raterId.value)}_${sanitize(els.sessionId.value)}_production_scoring`;
-    downloadBlob(rowsToCsv(buildExportRows()), `${base}.csv`, "text/csv;charset=utf-8");
+    downloadBlob(rowsToCsv(buildExportRows()), `${exportBaseName()}.csv`, "text/csv;charset=utf-8");
   }
 
   function exportJson() {
-    const base = `${sanitize(els.raterId.value)}_${sanitize(els.sessionId.value)}_production_scoring`;
     downloadBlob(JSON.stringify({
       platform_version: VERSION,
       exported_at: new Date().toISOString(),
       rater_id: els.raterId.value.trim(),
-      session_id: els.sessionId.value.trim(),
+      session_id: sessionIdValue(),
       manifest_url: state.manifestUrl,
-      dataset_filter: selectedDatasetKey(),
+      task_filter: selectedTaskKey(),
       assigned_participants: state.assignedParticipants,
       rows: buildExportRows(),
-    }, null, 2), `${base}.json`, "application/json;charset=utf-8");
+    }, null, 2), `${exportBaseName()}.json`, "application/json;charset=utf-8");
   }
 
   window.addEventListener("resize", drawWaveform);
@@ -1374,26 +1335,23 @@
       });
     }
   });
-  els.taskFilterL2.addEventListener("change", renderParticipants);
-  els.taskFilterPicture.addEventListener("change", renderParticipants);
-  els.datasetSelect.addEventListener("change", () => {
-    state.selectedDataset = selectedDatasetKey();
-    state.items = [];
-    state.assignedParticipants = [];
-    state.scores = {};
-    els.startBtn.disabled = true;
-    els.exportCsvBtn.disabled = true;
-    els.exportJsonBtn.disabled = true;
+  els.testSelect.addEventListener("change", () => {
+    clearPreparedQueue();
     renderParticipants();
   });
-  els.raterId.addEventListener("input", updateSetupSummary);
+  els.raterId.addEventListener("input", () => {
+    clearPreparedQueue();
+    updateSetupSummary();
+  });
   els.selectAllBtn.addEventListener("click", () => {
+    clearPreparedQueue();
     els.participantGrid.querySelectorAll("input").forEach((input) => {
       input.checked = true;
     });
     updateSetupSummary();
   });
   els.clearAllBtn.addEventListener("click", () => {
+    clearPreparedQueue();
     els.participantGrid.querySelectorAll("input").forEach((input) => {
       input.checked = false;
     });

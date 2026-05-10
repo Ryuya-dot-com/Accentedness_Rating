@@ -27,19 +27,19 @@ http://127.0.0.1:8765/
 
 ## Participant Checkbox Workflow
 
-The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows a dataset dropdown, task checkboxes, and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
+The platform is CSV-driven, but raters do not need to type a manifest URL or choose experimental conditions during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows `Rater ID`, `Test to score`, and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
 
 Recommended rater flow:
 
 1. Enter `Rater ID`.
-2. Choose `Scoring round` for the rater's work batch.
-3. Choose the uploaded `Dataset`.
-4. Check the task type(s) to score.
-5. Check the participant ID(s) assigned to the rater.
-6. Click `Prepare selected recordings`.
-7. Click `Start scoring`.
+2. Choose `Test to score`.
+3. Check the participant ID(s) assigned to the rater.
+4. Click `Prepare scoring queue`.
+5. Click `Start scoring`.
 
-`Scoring round` is the rater/export label. Test-session grouping such as `E`, `J`, and `C` should be represented in the manifest with `dataset_id` and `test_session`, then selected with the `Dataset` dropdown.
+Experimental condition and test-session metadata such as `E`, `J`, and `C` should be represented in the manifest with `dataset_id` and `test_session`. Raters do not select those fields; they are carried through to the CSV/JSON exports.
+
+The scoring queue is shuffled automatically. The deterministic seed is based on the rater ID plus the selected test, manifest, and participant set, so the same rater assignment can be resumed with the same order.
 
 The bundled demo manifest includes 24 synthetic WAV files under `recordings/demo/`: `demo_E`, `demo_J`, and `demo_C`, with two anonymized participant IDs per dataset.
 

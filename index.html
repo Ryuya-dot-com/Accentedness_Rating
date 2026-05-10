@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,45 +19,45 @@
       <section class="panel setup-panel" id="setup-panel">
         <div class="panel-heading">
           <div>
-            <h2>Scoring setup</h2>
-            <p>Enter the rater ID, choose the task, select participant IDs, then start scoring.</p>
+            <h2>採点の準備</h2>
+            <p>採点者IDを入力し、採点する課題と参加者IDを選んでから採点を開始してください。</p>
           </div>
-          <div class="setup-status" id="setup-status">Loading recordings</div>
+          <div class="setup-status" id="setup-status">音声を読み込み中</div>
         </div>
 
         <div class="status-grid" aria-live="polite">
           <div>
-            <span>Recordings</span>
+            <span>音声数</span>
             <strong id="status-rows">0</strong>
           </div>
           <div>
-            <span>Participants</span>
+            <span>参加者</span>
             <strong id="status-participants">0</strong>
           </div>
           <div>
-            <span>Task</span>
+            <span>課題</span>
             <strong id="status-assigned">0</strong>
           </div>
           <div>
-            <span>Queue</span>
+            <span>採点待ち</span>
             <strong id="status-trials">0</strong>
           </div>
         </div>
 
         <div class="setup-layout">
           <section class="setup-section">
-            <h3>Rater</h3>
+            <h3>採点者</h3>
             <div class="form-grid">
               <label>
-                Rater ID
+                採点者ID
                 <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
               </label>
               <label>
-                Task to score
+                採点する課題
                 <select id="test-select">
-                  <option value="all">Both production tasks</option>
-                  <option value="picture_naming">Picture Naming only</option>
-                  <option value="l2_to_l1">L2-to-L1 only</option>
+                  <option value="all">両方の課題</option>
+                  <option value="picture_naming">Picture Naming Taskのみ</option>
+                  <option value="l2_to_l1">L2-to-L1 Translation Taskのみ</option>
                 </select>
               </label>
               <input id="session-id" type="hidden" value="auto" />
@@ -66,22 +66,22 @@
 
           <section class="setup-section">
             <div class="section-row">
-              <h3>Recording source</h3>
-              <button id="load-manifest-btn" class="secondary">Reload recordings</button>
+              <h3>音声データ</h3>
+              <button id="load-manifest-btn" class="secondary">音声リストを再読み込み</button>
             </div>
             <div class="source-card primary-source">
               <div class="source-heading">
-                <p class="source-kicker">GitHub recording set</p>
-                <h4>Placeholder scoring set</h4>
-                <p>The default set contains P001-P006 and is ready for scoring practice.</p>
+                <p class="source-kicker">GitHub上の音声セット</p>
+                <h4>練習用データセット</h4>
+                <p>デフォルトではP001-P006の練習用データを読み込みます。</p>
               </div>
-              <div class="source-summary" id="source-summary">Default: scoring_manifest_demo.csv</div>
+              <div class="source-summary" id="source-summary">デフォルト: scoring_manifest_demo.csv</div>
 
               <details class="manifest-details">
-                <summary>Use a different scoring manifest</summary>
+                <summary>別のscoring manifestを使う</summary>
                 <label class="checkbox-label source-option">
                   <input id="custom-manifest-toggle" type="checkbox" />
-                  Enable custom manifest URL
+                  カスタムmanifest URLを有効にする
                 </label>
                 <label id="custom-manifest-field" class="custom-field hidden">
                   Manifest URL
@@ -90,28 +90,57 @@
               </details>
 
               <p class="privacy-note">
-                Use anonymized participant IDs only. Do not include names, student numbers, or other direct identifiers in uploaded filenames.
+                参加者IDは匿名化されたIDのみを使用してください。ファイル名やmanifestに氏名、学籍番号、メールアドレスなどの直接識別子を含めないでください。
               </p>
             </div>
           </section>
 
           <section class="setup-section">
             <div class="section-row">
-              <h3>Participant IDs</h3>
+              <h3>参加者ID</h3>
               <div class="participant-actions">
-                <button id="select-all-btn" class="secondary" disabled>Select all</button>
-                <button id="clear-all-btn" class="secondary" disabled>Clear</button>
+                <button id="select-all-btn" class="secondary" disabled>すべて選択</button>
+                <button id="clear-all-btn" class="secondary" disabled>選択解除</button>
               </div>
             </div>
-            <div id="participant-grid" class="participant-grid empty">Loading participant IDs...</div>
+            <div id="participant-grid" class="participant-grid empty">参加者IDを読み込み中...</div>
           </section>
         </div>
 
+        <details class="shortcut-details">
+          <summary>採点手順とショートカットを確認する</summary>
+          <div class="help-grid">
+            <div>
+              <h3>採点手順</h3>
+              <ol>
+                <li>採点者IDを入力します。</li>
+                <li>採点する課題と参加者IDを選びます。</li>
+                <li>採点キューを準備し、採点を開始します。</li>
+                <li>各音声を聞き、正誤と発話開始位置を確認します。</li>
+                <li>必要に応じて波形上でonset / offsetを修正します。</li>
+                <li>最後にCSVまたはJSONを書き出します。</li>
+              </ol>
+            </div>
+            <div>
+              <h3>ショートカット</h3>
+              <dl class="shortcut-list">
+                <div><dt>Space</dt><dd>参加者音声を再生 / 一時停止</dd></div>
+                <div><dt>M</dt><dd>モデル音声を再生</dd></div>
+                <div><dt>R</dt><dd>onsetの少し前から再生</dd></div>
+                <div><dt>0 / 5 / 1</dt><dd>正確性を0 / 0.5 / 1に設定</dd></div>
+                <div><dt>9</dt><dd>NRに設定</dd></div>
+                <div><dt>C</dt><dd>自動onsetを確認済みにする</dd></div>
+                <div><dt>← / →</dt><dd>前後の音声へ移動</dd></div>
+              </dl>
+            </div>
+          </div>
+        </details>
+
         <div class="actions">
-          <button id="prepare-btn" disabled>Prepare scoring queue</button>
-          <button id="start-btn" disabled>Start scoring</button>
-          <button id="export-csv-btn" class="secondary" disabled>Export CSV</button>
-          <button id="export-json-btn" class="secondary" disabled>Export JSON</button>
+          <button id="prepare-btn" disabled>採点キューを準備</button>
+          <button id="start-btn" disabled>採点を開始</button>
+          <button id="export-csv-btn" class="secondary" disabled>CSVを書き出す</button>
+          <button id="export-json-btn" class="secondary" disabled>JSONを書き出す</button>
         </div>
 
         <pre id="setup-log" class="log" aria-live="polite"></pre>
@@ -120,39 +149,39 @@
       <section class="panel scoring-panel hidden" id="scoring-panel">
         <div class="scoring-topbar">
           <div>
-            <p class="eyebrow" id="trial-phase">Scoring</p>
+            <p class="eyebrow" id="trial-phase">採点</p>
             <h2 id="trial-title">Trial</h2>
           </div>
           <div class="topbar-actions">
-            <button id="back-btn" class="secondary">Back</button>
-            <button id="prev-btn" class="secondary">Prev</button>
-            <button id="next-unscored-btn" class="secondary">Next open</button>
-            <button id="next-btn">Next</button>
+            <button id="back-btn" class="secondary">準備画面へ</button>
+            <button id="prev-btn" class="secondary">前へ</button>
+            <button id="next-unscored-btn" class="secondary">未採点へ</button>
+            <button id="next-btn">次へ</button>
           </div>
         </div>
 
         <div class="progress-track" aria-hidden="true">
           <div id="progress-fill"></div>
         </div>
-        <div class="progress-text" id="progress-text">0 of 0 scored</div>
+        <div class="progress-text" id="progress-text">0 / 0 採点済み</div>
         <div id="trial-strip" class="trial-strip" aria-label="Trial navigation"></div>
 
         <div class="scoring-layout">
           <aside class="trial-rail">
             <div>
-              <span>Participant</span>
+              <span>参加者</span>
               <strong id="rail-participant">-</strong>
             </div>
             <div>
-              <span>Task</span>
+              <span>課題</span>
               <strong id="rail-task">-</strong>
             </div>
             <div>
-              <span>Trial</span>
+              <span>試行</span>
               <strong id="rail-trial">-</strong>
             </div>
             <div>
-              <span>Complete</span>
+              <span>完了</span>
               <strong id="rail-saved">0</strong>
             </div>
           </aside>
@@ -163,6 +192,10 @@
                 <span id="task-badge" class="task-badge">Task</span>
                 <h3 id="target-word">Target</h3>
                 <p id="expected-response"></p>
+                <div class="model-audio-row">
+                  <button id="model-audio-btn" class="secondary" disabled>モデル音声を聞く</button>
+                  <span id="model-audio-status">モデル音声なし</span>
+                </div>
                 <p id="trial-metadata"></p>
               </div>
               <div id="image-slot" class="image-slot hidden">
@@ -172,12 +205,12 @@
 
             <section class="trial-checks" aria-live="polite">
               <div class="check-card" id="accuracy-check">
-                <span>Accuracy</span>
-                <strong>Pending</strong>
+                <span>正確性</span>
+                <strong>未入力</strong>
               </div>
               <div class="check-card" id="onset-check">
                 <span>Onset</span>
-                <strong>Pending</strong>
+                <strong>未入力</strong>
               </div>
               <div class="check-card" id="offset-check">
                 <span>Offset</span>
@@ -191,13 +224,13 @@
 
             <section class="audio-card">
               <div class="audio-actions">
-                <button id="play-btn">Play</button>
-                <button id="stop-btn" class="secondary">Stop</button>
-                <button id="play-onset-btn" class="secondary">From onset</button>
-                <button id="set-onset-marker-btn" class="secondary marker-button" data-marker="onset">Move onset</button>
-                <button id="set-offset-marker-btn" class="secondary marker-button" data-marker="offset">Move offset</button>
+                <button id="play-btn">再生</button>
+                <button id="stop-btn" class="secondary">停止</button>
+                <button id="play-onset-btn" class="secondary">onsetから再生</button>
+                <button id="set-onset-marker-btn" class="secondary marker-button" data-marker="onset">onsetを動かす</button>
+                <button id="set-offset-marker-btn" class="secondary marker-button" data-marker="offset">offsetを動かす</button>
                 <label>
-                  Speed
+                  速度
                   <select id="speed-select">
                     <option value="0.75">0.75x</option>
                     <option value="1" selected>1x</option>
@@ -209,13 +242,13 @@
               <canvas id="waveform-canvas" height="150"></canvas>
               <div class="audio-info">
                 <span id="audio-time">0.000s / 0.000s</span>
-                <span id="audio-status">No audio loaded.</span>
+                <span id="audio-status">音声は未読み込みです。</span>
               </div>
             </section>
 
             <section class="response-grid">
               <fieldset class="score-block">
-                <legend>Accuracy</legend>
+                <legend>正確性</legend>
                 <div class="score-buttons" id="score-buttons">
                   <button data-score="NR" class="score-button">NR</button>
                   <button data-score="0" class="score-button">0</button>
@@ -226,12 +259,12 @@
               </fieldset>
 
               <fieldset class="score-block">
-                <legend>Timing</legend>
+                <legend>タイミング</legend>
                 <div class="onset-buttons" id="onset-buttons">
-                  <button data-onset="confirmed" class="onset-button secondary">Use auto</button>
-                  <button data-onset="corrected" class="onset-button secondary">Correct</button>
-                  <button data-onset="manual" class="onset-button secondary">Set manually</button>
-                  <button data-onset="no_speech" class="onset-button secondary">No speech</button>
+                  <button data-onset="confirmed" class="onset-button secondary">自動値を使用</button>
+                  <button data-onset="corrected" class="onset-button secondary">修正済み</button>
+                  <button data-onset="manual" class="onset-button secondary">手動入力</button>
+                  <button data-onset="no_speech" class="onset-button secondary">発話なし</button>
                 </div>
                 <div class="onset-input-row">
                   <label>
@@ -242,15 +275,15 @@
                     Offset ms
                     <input id="offset-input" type="number" min="0" step="0.1" />
                   </label>
-                  <button id="apply-onset-btn" class="secondary">Apply</button>
-                  <button id="clear-offset-btn" class="secondary">Clear offset</button>
+                  <button id="apply-onset-btn" class="secondary">反映</button>
+                  <button id="clear-offset-btn" class="secondary">offsetを消去</button>
                 </div>
               </fieldset>
             </section>
 
             <label class="notes-box">
-              Notes
-              <textarea id="notes-input" rows="3" placeholder="Optional scoring notes"></textarea>
+              メモ
+              <textarea id="notes-input" rows="3" placeholder="必要に応じて採点メモを入力"></textarea>
             </label>
           </div>
         </div>

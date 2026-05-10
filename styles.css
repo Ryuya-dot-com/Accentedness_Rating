@@ -306,12 +306,14 @@ label {
   max-width: 560px;
 }
 
-.manifest-details {
+.manifest-details,
+.shortcut-details {
   border-top: 1px solid rgba(16, 82, 86, 0.16);
   padding-top: 12px;
 }
 
-.manifest-details summary {
+.manifest-details summary,
+.shortcut-details summary {
   color: var(--accent-strong);
   cursor: pointer;
   font-weight: 900;
@@ -319,6 +321,53 @@ label {
 
 .manifest-details .source-option {
   margin-top: 12px;
+}
+
+.shortcut-details {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 18px;
+  margin-top: 18px;
+  padding-bottom: 14px;
+}
+
+.help-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin-top: 14px;
+}
+
+.help-grid h3 {
+  margin: 0 0 8px;
+}
+
+.help-grid ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.shortcut-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.shortcut-list div {
+  align-items: baseline;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 82px minmax(0, 1fr);
+}
+
+.shortcut-list dt {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.shortcut-list dd {
+  color: var(--ink-muted);
+  font-weight: 700;
+  margin: 0;
 }
 
 .privacy-note {
@@ -603,6 +652,20 @@ label {
   margin: 4px 0 0;
 }
 
+.model-audio-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.model-audio-row span {
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
 .image-slot {
   align-items: center;
   display: flex;
@@ -740,6 +803,7 @@ label {
 
   .form-grid,
   .task-check-grid,
+  .help-grid,
   .status-grid,
   .participant-grid,
   .scoring-layout,

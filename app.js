@@ -1,16 +1,19 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.7";
+  const VERSION = "production_scoring_v0.5.8";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
+  const MODEL_AUDIO_URL_COLUMNS = ["model_audio_url", "stimulus_audio_url", "reference_audio_url", "target_audio_url", "prompt_audio_url"];
+  const MODEL_AUDIO_FILE_COLUMNS = ["model_audio_file", "stimulus_audio_file", "reference_audio_file", "target_audio_file", "prompt_audio_file"];
   const IMAGE_URL_COLUMNS = ["image_url", "picture_url", "stimulus_image_url"];
   const IMAGE_FILE_COLUMNS = ["image_file", "picture_file", "stimulus_image", "image"];
   const EXPORT_COLUMNS = [
     "platform_version", "rater_id", "session_id", "manifest_url", "dataset_id", "test_session", "scored_at",
     "row_index", "participant_id", "task", "trial_number", "target_word",
     "expected_response", "expected_language", "audio_url", "source_path", "audio_play_count",
+    "model_audio_url", "model_source_path",
     "image_url", "condition", "accent_condition", "list", "word_number",
     "accuracy_score", "onset_status", "onset_ms_auto", "onset_ms_rater",
     "offset_status", "offset_ms_auto", "offset_ms_rater", "duration_ms_rater",
@@ -58,6 +61,8 @@
     taskBadge: document.getElementById("task-badge"),
     targetWord: document.getElementById("target-word"),
     expectedResponse: document.getElementById("expected-response"),
+    modelAudioBtn: document.getElementById("model-audio-btn"),
+    modelAudioStatus: document.getElementById("model-audio-status"),
     trialMetadata: document.getElementById("trial-metadata"),
     imageSlot: document.getElementById("image-slot"),
     stimulusImage: document.getElementById("stimulus-image"),
@@ -93,6 +98,7 @@
     scores: {},
     sessionKey: "",
     currentAudio: null,
+    modelAudio: null,
     animationId: null,
     waveform: null,
     markerMode: null,
@@ -132,24 +138,24 @@
   function taskLabel(value) {
     if (value === "l2_to_l1") return "L2-to-L1";
     if (value === "picture_naming") return "Picture Naming";
-    return "Task";
+    return "課題";
   }
 
   function selectedTestLabel() {
     const value = els.testSelect.value;
-    if (value === "l2_to_l1") return "L2-to-L1 only";
-    if (value === "picture_naming") return "Picture Naming only";
-    return "Both tasks";
+    if (value === "l2_to_l1") return "L2-to-L1 Translation Taskのみ";
+    if (value === "picture_naming") return "Picture Naming Taskのみ";
+    return "両方の課題";
   }
 
   function expectedResponseText(item) {
     if (!item.expected_response) {
-      return item.task === "l2_to_l1" ? "Japanese answer unavailable" : "Expected response unavailable";
+      return item.task === "l2_to_l1" ? "日本語訳の正答なし" : "正答情報なし";
     }
     if (item.task === "l2_to_l1") {
-      return `Japanese answer: ${item.expected_response}`;
+      return `日本語訳の正答: ${item.expected_response}`;
     }
-    return `Expected: ${item.expected_response} (${item.expected_language})`;
+    return `正答: ${item.expected_response} (${item.expected_language})`;
   }
 
   function csvCell(value) {
@@ -295,6 +301,7 @@
     if (!participantId || !sourcePath) return null;
 
     const task = normalizeTask(valueFrom(row, ["task", "test_type", "test", "phase"]), sourcePath);
+    const modelAudioPath = valueFrom(row, MODEL_AUDIO_URL_COLUMNS) || valueFrom(row, MODEL_AUDIO_FILE_COLUMNS);
     const imagePath = valueFrom(row, IMAGE_URL_COLUMNS) || valueFrom(row, IMAGE_FILE_COLUMNS);
     let referenceMs = task === "l2_to_l1"
       ? numberFrom(row, ["stimulus_end_ms", "playback_end_ms_rel", "playback_end_ms", "reference_ms"])
@@ -319,6 +326,8 @@
       audio_url: resolveUrl(sourcePath, manifestUrl),
       source_path: sourcePath,
       audio_file_name: fileNameFromPath(sourcePath),
+      model_audio_url: modelAudioPath ? resolveUrl(modelAudioPath, manifestUrl) : "",
+      model_source_path: modelAudioPath,
       image_url: imagePath ? resolveUrl(imagePath, manifestUrl) : "",
       condition: valueFrom(row, ["condition", "timing", "session", "phase_condition"]),
       accent_condition: valueFrom(row, ["accent_condition", "accent", "native_language", "l1"]),
@@ -354,21 +363,21 @@
   function syncCustomManifestVisibility() {
     els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
     els.sourceSummary.textContent = els.customManifestToggle.checked
-      ? "Custom manifest enabled"
-      : `Default: ${DEFAULT_MANIFEST_URL}`;
+      ? "カスタムmanifestを使用"
+      : `デフォルト: ${DEFAULT_MANIFEST_URL}`;
   }
 
   async function fetchCsv(url) {
     const resolvedUrl = resolveUrl(url || DEFAULT_MANIFEST_URL);
     const response = await fetch(resolvedUrl, { cache: "no-store" });
-    if (!response.ok) throw new Error(`Could not load ${resolvedUrl} (${response.status})`);
+    if (!response.ok) throw new Error(`${resolvedUrl} を読み込めませんでした (${response.status})`);
     return { rows: parseCsv(await response.text()), url: resolvedUrl };
   }
 
   async function loadManifest() {
     els.loadManifestBtn.disabled = true;
-    setSetupStatus("Loading manifest");
-    setLog(`Loading recordings:\n${manifestInput()}`);
+    setSetupStatus("manifestを読み込み中");
+    setLog(`音声リストを読み込み中:\n${manifestInput()}`);
 
     const { rows, url } = await fetchCsv(manifestInput());
     const items = rows.map((row, index) => normalizeManifestRow(row, index, url)).filter(Boolean);
@@ -376,7 +385,7 @@
       state.manifestItems = [];
       state.manifestUrl = "";
       renderParticipants();
-      throw new Error("Manifest rows need participant_id and audio_file or audio_url.");
+      throw new Error("manifestには participant_id と audio_file または audio_url が必要です。");
     }
 
     state.manifestItems = items;
@@ -386,12 +395,12 @@
     state.scores = {};
     updateSetupSummary();
     renderParticipants();
-    els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_MANIFEST_URL}`;
+    els.sourceSummary.textContent = els.customManifestToggle.checked ? `読み込み済み: ${url}` : `デフォルトを読み込み済み: ${DEFAULT_MANIFEST_URL}`;
     const datasetCount = new Set(items.map((item) => item.dataset_id)).size;
     setLog([
       `manifest_url: ${url}`,
-      `datasets: ${datasetCount}`,
-      `usable_rows: ${items.length}`,
+      `データセット数: ${datasetCount}`,
+      `使用可能な行数: ${items.length}`,
       `l2_to_l1: ${items.filter((item) => item.task === "l2_to_l1").length}`,
       `picture_naming: ${items.filter((item) => item.task === "picture_naming").length}`,
     ].join("\n"));
@@ -433,7 +442,7 @@
     els.participantGrid.innerHTML = "";
     els.participantGrid.classList.toggle("empty", participants.length === 0);
     if (!participants.length) {
-      els.participantGrid.textContent = state.manifestItems.length ? "No participants for the selected test." : "Loading participants...";
+      els.participantGrid.textContent = state.manifestItems.length ? "選択した課題に該当する参加者がいません。" : "参加者を読み込み中...";
     } else {
       participants.forEach(([participantId, info]) => {
         const label = document.createElement("label");
@@ -483,17 +492,17 @@
     const taskCount = selectedTaskSet().size;
     els.prepareBtn.disabled = !(hasRater && assigned.length && trials);
     if (state.items.length) {
-      setSetupStatus("Ready", true);
+      setSetupStatus("準備完了", true);
     } else if (!state.manifestItems.length) {
-      setSetupStatus("Loading participant list");
+      setSetupStatus("参加者リストを読み込み中");
     } else if (!taskCount) {
-      setSetupStatus("Tasks needed");
+      setSetupStatus("課題を選択してください");
     } else if (!hasRater) {
-      setSetupStatus("Rater needed");
+      setSetupStatus("採点者IDを入力してください");
     } else if (!assigned.length) {
-      setSetupStatus("Participants needed");
+      setSetupStatus("参加者を選択してください");
     } else if (trials) {
-      setSetupStatus("Ready to prepare");
+      setSetupStatus("採点キューを準備できます");
     }
   }
 
@@ -552,7 +561,7 @@
   function prepareScoring() {
     const raterId = els.raterId.value.trim();
     if (!raterId) {
-      setSetupStatus("Rater needed");
+      setSetupStatus("採点者IDを入力してください");
       els.raterId.focus();
       return;
     }
@@ -584,13 +593,13 @@
     els.exportCsvBtn.disabled = state.items.length === 0;
     els.exportJsonBtn.disabled = state.items.length === 0;
     updateSetupSummary();
-    setSetupStatus("Ready", true);
+    setSetupStatus("準備完了", true);
     setLog([
-      `task_filter: ${selectedTestLabel()}`,
-      `assigned_participants: ${assigned.join(", ")}`,
-      `prepared_trials: ${state.items.length}`,
-      `shuffle_seed: rater_id`,
-      `saved_scores_loaded: ${Object.keys(state.scores).length}`,
+      `課題: ${selectedTestLabel()}`,
+      `参加者: ${assigned.join(", ")}`,
+      `採点対象: ${state.items.length}`,
+      `シャッフル: 採点者IDをシードとして使用`,
+      `復元済みスコア数: ${Object.keys(state.scores).length}`,
       `session_key: ${state.sessionKey}`,
     ].join("\n"));
     saveSession();
@@ -644,9 +653,9 @@
   }
 
   function completionLabel(item) {
-    if (isComplete(item)) return "Complete";
-    if (hasPartialScore(item)) return "Partial";
-    return "Open";
+    if (isComplete(item)) return "完了";
+    if (hasPartialScore(item)) return "途中";
+    return "未採点";
   }
 
   function patchScore(item, patch) {
@@ -682,14 +691,18 @@
     if (!item) return;
     const score = scoreFor(item);
 
-    els.trialPhase.textContent = `Sample ${state.currentIndex + 1} of ${state.items.length}`;
-    els.trialTitle.textContent = item.audio_file_name || "Recording";
+    els.trialPhase.textContent = `${state.currentIndex + 1} / ${state.items.length}`;
+    els.trialTitle.textContent = item.audio_file_name || "音声";
     els.railParticipant.textContent = item.participant_id;
     els.railTask.textContent = taskLabel(item.task);
     els.railTrial.textContent = String(item.trial_number || item.row_index);
     els.taskBadge.textContent = taskLabel(item.task);
-    els.targetWord.textContent = item.target_word || item.expected_response || "Target unavailable";
+    els.targetWord.textContent = item.target_word || item.expected_response || "ターゲット情報なし";
     els.expectedResponse.textContent = expectedResponseText(item);
+    els.modelAudioBtn.disabled = !item.model_audio_url;
+    els.modelAudioStatus.textContent = item.model_audio_url
+      ? "必要に応じて正答・刺激音声を確認できます。"
+      : "この試行にはモデル音声が登録されていません。";
     els.trialMetadata.textContent = [
       item.dataset_id ? `dataset=${item.dataset_id}` : "",
       item.test_session ? `test=${item.test_session}` : "",
@@ -709,8 +722,8 @@
     }
 
     els.scoreHint.textContent = item.task === "l2_to_l1"
-      ? "L2-to-L1: score the spoken Japanese answer against the Japanese answer shown above. Use 1 for a correct answer; 0.5 is usually unnecessary."
-      : "Picture Naming: use 0.5 for limited within-syllable phoneme errors.";
+      ? "L2-to-L1: 上に表示された日本語訳の正答と照合して採点します。正答は1、通常0.5は不要です。"
+      : "Picture Naming: 音節内の一部音素のみの誤りなど、限定的な誤りは0.5を使用できます。";
     els.notesInput.value = score.notes || "";
     els.onsetInput.value = score.onset_ms_rater != null
       ? score.onset_ms_rater
@@ -770,8 +783,8 @@
     const offsetMs = markerOffsetMs(item, score);
     const duration = durationFor(item, score);
 
-    setCheck(els.accuracyCheck, hasAccuracy ? "done" : "pending", hasAccuracy ? String(score.accuracy_score) : "Pending");
-    setCheck(els.onsetCheck, hasOnset ? "done" : "pending", hasOnset ? score.onset_status.replace("_", " ") : "Pending");
+    setCheck(els.accuracyCheck, hasAccuracy ? "done" : "pending", hasAccuracy ? String(score.accuracy_score) : "未入力");
+    setCheck(els.onsetCheck, hasOnset ? "done" : "pending", hasOnset ? score.onset_status.replace("_", " ") : "未入力");
     const offsetLabel = offsetMs == null
       ? "-"
       : `${Number(offsetMs).toFixed(1)} ms${duration == null ? "" : ` (${duration.toFixed(1)} ms)`}`;
@@ -788,6 +801,11 @@
       state.currentAudio.src = "";
       state.currentAudio = null;
     }
+    if (state.modelAudio) {
+      state.modelAudio.pause();
+      state.modelAudio.src = "";
+      state.modelAudio = null;
+    }
     state.audioReady = false;
     state.draggingMarker = null;
     els.waveformCanvas.classList.remove("marker-dragging");
@@ -798,9 +816,9 @@
     state.audioReady = false;
     state.audioPlayCount = Number(scoreFor(item).audio_play_count || 0);
     drawWaveform();
-    els.audioStatus.textContent = "Loading audio...";
+    els.audioStatus.textContent = "参加者音声を読み込み中...";
     els.audioTime.textContent = "0.000s / 0.000s";
-    els.playBtn.textContent = "Play";
+    els.playBtn.textContent = "再生";
     els.playBtn.disabled = true;
     els.stopBtn.disabled = true;
     els.playOnsetBtn.disabled = true;
@@ -817,14 +835,14 @@
       updateTrialChecks();
       updateAudioTime();
       drawWaveform();
-      if (!state.waveform) els.audioStatus.textContent = "Audio ready.";
+      if (!state.waveform) els.audioStatus.textContent = "参加者音声を再生できます。";
     });
     audio.addEventListener("timeupdate", () => {
       updateAudioTime();
       drawWaveform();
     });
     audio.addEventListener("ended", () => {
-      els.playBtn.textContent = "Replay";
+      els.playBtn.textContent = "もう一度再生";
       drawWaveform();
     });
     audio.addEventListener("error", () => {
@@ -832,7 +850,7 @@
       els.playBtn.disabled = true;
       els.stopBtn.disabled = true;
       els.playOnsetBtn.disabled = true;
-      els.audioStatus.textContent = "Audio could not be loaded. Check the manifest path.";
+      els.audioStatus.textContent = "参加者音声を読み込めません。manifestのパスを確認してください。";
       console.warn("Audio could not be loaded:", item.audio_url);
     });
 
@@ -840,12 +858,12 @@
       .then((waveform) => {
         if (currentItem() !== item) return;
         state.waveform = waveform;
-        els.audioStatus.textContent = "Waveform ready.";
+        els.audioStatus.textContent = "波形を表示しました。";
         drawWaveform();
       })
       .catch(() => {
         if (currentItem() === item) {
-          els.audioStatus.textContent = "Audio ready. Waveform unavailable for this host.";
+          els.audioStatus.textContent = "音声を再生できます。このホストでは波形を取得できません。";
           drawWaveform();
         }
       });
@@ -930,7 +948,7 @@
     } else {
       ctx.fillStyle = "#7a8795";
       ctx.font = `${13 * ratio}px sans-serif`;
-      ctx.fillText("Waveform preview", 16 * ratio, 28 * ratio);
+      ctx.fillText("波形プレビュー", 16 * ratio, 28 * ratio);
     }
 
     const item = currentItem();
@@ -987,11 +1005,40 @@
       }
       await audio.play();
       recordAudioPlayback(item);
-      els.playBtn.textContent = "Pause";
+      els.playBtn.textContent = "一時停止";
       animateWaveform();
     } else {
       audio.pause();
-      els.playBtn.textContent = "Play";
+      els.playBtn.textContent = "再生";
+    }
+  }
+
+  async function playModelAudio() {
+    const item = currentItem();
+    if (!item || !item.model_audio_url) return;
+    if (state.modelAudio) {
+      state.modelAudio.pause();
+      state.modelAudio.src = "";
+      state.modelAudio = null;
+    }
+    const audio = new Audio(item.model_audio_url);
+    state.modelAudio = audio;
+    els.modelAudioBtn.disabled = true;
+    els.modelAudioStatus.textContent = "モデル音声を再生中...";
+    audio.addEventListener("ended", () => {
+      els.modelAudioBtn.disabled = false;
+      els.modelAudioStatus.textContent = "モデル音声を再生できます。";
+    });
+    audio.addEventListener("error", () => {
+      els.modelAudioBtn.disabled = false;
+      els.modelAudioStatus.textContent = "モデル音声を読み込めません。manifestのパスを確認してください。";
+      console.warn("Model audio could not be loaded:", item.model_audio_url);
+    });
+    try {
+      await audio.play();
+    } catch (error) {
+      els.modelAudioBtn.disabled = false;
+      els.modelAudioStatus.textContent = "モデル音声の再生に失敗しました。";
     }
   }
 
@@ -1010,7 +1057,7 @@
     if (!state.currentAudio || !state.audioReady) return;
     state.currentAudio.pause();
     state.currentAudio.currentTime = 0;
-    els.playBtn.textContent = "Play";
+    els.playBtn.textContent = "再生";
     updateAudioTime();
     drawWaveform();
   }
@@ -1024,7 +1071,7 @@
     audio.currentTime = Math.max(0, Number(onsetMs) / 1000 - 0.2);
     audio.play().then(() => {
       recordAudioPlayback(item);
-      els.playBtn.textContent = "Pause";
+      els.playBtn.textContent = "一時停止";
       animateWaveform();
     });
   }
@@ -1253,7 +1300,7 @@
     const total = state.items.length;
     const pct = total ? (done / total) * 100 : 0;
     els.progressFill.style.width = `${pct}%`;
-    els.progressText.textContent = `${done} of ${total} complete`;
+    els.progressText.textContent = `${done} / ${total} 採点済み`;
     els.railSaved.textContent = String(done);
     els.prevBtn.disabled = state.currentIndex === 0;
     els.nextBtn.disabled = state.currentIndex >= state.items.length - 1;
@@ -1294,6 +1341,8 @@
         audio_url: item.audio_url,
         source_path: item.source_path,
         audio_play_count: score.audio_play_count || "",
+        model_audio_url: item.model_audio_url,
+        model_source_path: item.model_source_path,
         image_url: item.image_url,
         condition: item.condition,
         accent_condition: item.accent_condition,
@@ -1350,8 +1399,8 @@
   els.loadManifestBtn.addEventListener("click", () => {
     loadManifest().catch((error) => {
       els.loadManifestBtn.disabled = false;
-      setSetupStatus("Load failed");
-      setLog(`Manifest load failed: ${error.message}`);
+      setSetupStatus("読み込み失敗");
+      setLog(`manifestの読み込みに失敗しました: ${error.message}`);
     });
   });
   els.customManifestToggle.addEventListener("change", syncCustomManifestVisibility);
@@ -1360,8 +1409,8 @@
       event.preventDefault();
       loadManifest().catch((error) => {
         els.loadManifestBtn.disabled = false;
-        setSetupStatus("Load failed");
-        setLog(`Manifest load failed: ${error.message}`);
+        setSetupStatus("読み込み失敗");
+        setLog(`manifestの読み込みに失敗しました: ${error.message}`);
       });
     }
   });
@@ -1394,8 +1443,9 @@
   els.nextUnscoredBtn.addEventListener("click", nextOpenItem);
   els.nextBtn.addEventListener("click", nextItem);
   els.playBtn.addEventListener("click", () => playAudio().catch(() => {
-    els.audioStatus.textContent = "Playback failed.";
+    els.audioStatus.textContent = "再生に失敗しました。";
   }));
+  els.modelAudioBtn.addEventListener("click", () => playModelAudio());
   els.stopBtn.addEventListener("click", stopAudio);
   els.playOnsetBtn.addEventListener("click", playFromOnset);
   els.speedSelect.addEventListener("change", () => {
@@ -1442,8 +1492,8 @@
   syncCustomManifestVisibility();
   loadManifest().catch((error) => {
     els.loadManifestBtn.disabled = false;
-    setSetupStatus("Load failed");
-    setLog(`Manifest load failed: ${error.message}`);
+    setSetupStatus("読み込み失敗");
+    setLog(`manifestの読み込みに失敗しました: ${error.message}`);
   });
 
   document.addEventListener("keydown", (event) => {
@@ -1471,6 +1521,8 @@
       setOnsetStatus("confirmed");
     } else if (event.key.toLowerCase() === "r") {
       playFromOnset();
+    } else if (event.key.toLowerCase() === "m") {
+      playModelAudio();
     }
   });
 

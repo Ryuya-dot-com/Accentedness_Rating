@@ -93,8 +93,9 @@ Recommended columns:
 - `list`
 - `word_number`
 - `image_file` or `image_url` for Picture Naming
+- `model_audio_file`, `model_audio_url`, or `stimulus_audio_file` when scorers should be able to play the model/stimulus audio
 
-Relative paths in `audio_file` and `image_file` are resolved relative to the manifest URL. Absolute `audio_url` and `image_url` values can point to another static host.
+Relative paths in `audio_file`, `image_file`, and `model_audio_file` are resolved relative to the manifest URL. Absolute `audio_url`, `image_url`, and `model_audio_url` values can point to another static host.
 
 See:
 
@@ -114,6 +115,7 @@ Accuracy scores:
 
 Timing controls:
 
+- `モデル音声を聞く` plays the model or stimulus audio when the manifest provides one.
 - After playback finishes, click `Replay` to listen again. Playback starts are saved as `audio_play_count`.
 - Red marker: response onset.
 - Orange marker: response offset.
@@ -131,6 +133,8 @@ Onset statuses:
 For L2-to-L1, `latency_ms_rater = onset_ms_rater - stimulus_end_ms`.
 
 For Picture Naming, `latency_ms_rater = onset_ms_rater - image_onset_ms_rel`.
+
+Keyboard shortcuts are shown inside the platform under `採点手順とショートカットを確認する`.
 
 ## Output
 

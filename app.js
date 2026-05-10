@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.6";
+  const VERSION = "production_scoring_v0.5.7";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -140,6 +140,16 @@
     if (value === "l2_to_l1") return "L2-to-L1 only";
     if (value === "picture_naming") return "Picture Naming only";
     return "Both tasks";
+  }
+
+  function expectedResponseText(item) {
+    if (!item.expected_response) {
+      return item.task === "l2_to_l1" ? "Japanese answer unavailable" : "Expected response unavailable";
+    }
+    if (item.task === "l2_to_l1") {
+      return `Japanese answer: ${item.expected_response}`;
+    }
+    return `Expected: ${item.expected_response} (${item.expected_language})`;
   }
 
   function csvCell(value) {
@@ -679,9 +689,7 @@
     els.railTrial.textContent = String(item.trial_number || item.row_index);
     els.taskBadge.textContent = taskLabel(item.task);
     els.targetWord.textContent = item.target_word || item.expected_response || "Target unavailable";
-    els.expectedResponse.textContent = item.expected_response
-      ? `Expected: ${item.expected_response} (${item.expected_language})`
-      : "Expected response unavailable";
+    els.expectedResponse.textContent = expectedResponseText(item);
     els.trialMetadata.textContent = [
       item.dataset_id ? `dataset=${item.dataset_id}` : "",
       item.test_session ? `test=${item.test_session}` : "",
@@ -701,7 +709,7 @@
     }
 
     els.scoreHint.textContent = item.task === "l2_to_l1"
-      ? "L2-to-L1: use 1 for the correct L1 answer; 0.5 is usually unnecessary."
+      ? "L2-to-L1: score the spoken Japanese answer against the Japanese answer shown above. Use 1 for a correct answer; 0.5 is usually unnecessary."
       : "Picture Naming: use 0.5 for limited within-syllable phoneme errors.";
     els.notesInput.value = score.notes || "";
     els.onsetInput.value = score.onset_ms_rater != null

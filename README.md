@@ -27,15 +27,21 @@ http://127.0.0.1:8765/
 
 ## Participant Checkbox Workflow
 
-The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows task checkboxes and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
+The platform is CSV-driven, but raters do not need to type a manifest URL during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows a dataset dropdown, task checkboxes, and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
 
 Recommended rater flow:
 
 1. Enter `Rater ID`.
-2. Check the task type(s) to score.
-3. Check the participant ID(s) assigned to the rater.
-4. Click `Prepare selected participants`.
-5. Click `Start scoring`.
+2. Choose `Scoring round` for the rater's work batch.
+3. Choose the uploaded `Dataset`.
+4. Check the task type(s) to score.
+5. Check the participant ID(s) assigned to the rater.
+6. Click `Prepare selected recordings`.
+7. Click `Start scoring`.
+
+`Scoring round` is the rater/export label. Test-session grouping such as `E`, `J`, and `C` should be represented in the manifest with `dataset_id` and `test_session`, then selected with the `Dataset` dropdown.
+
+The bundled demo manifest includes 24 synthetic WAV files under `recordings/demo/`: `demo_E`, `demo_J`, and `demo_C`, with two anonymized participant IDs per dataset.
 
 Upload recordings to GitHub Pages, raw GitHub, or another static host, and keep the manifest next to the platform or point the custom manifest option to the manifest CSV.
 
@@ -71,6 +77,8 @@ Required columns:
 
 Recommended columns:
 
+- `dataset_id`
+- `test_session`: for example `E`, `J`, or `C`
 - `trial_number`
 - `target_word`
 - `expected_response`
@@ -129,6 +137,8 @@ Exports include one row per prepared recording, including unscored rows. Main ou
 
 - `rater_id`
 - `session_id`
+- `dataset_id`
+- `test_session`
 - `participant_id`
 - `task`
 - `trial_number`

@@ -1,14 +1,14 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.2";
+  const VERSION = "production_scoring_v0.5.3";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
   const IMAGE_URL_COLUMNS = ["image_url", "picture_url", "stimulus_image_url"];
   const IMAGE_FILE_COLUMNS = ["image_file", "picture_file", "stimulus_image", "image"];
   const EXPORT_COLUMNS = [
-    "platform_version", "rater_id", "session_id", "manifest_url", "scored_at",
+    "platform_version", "rater_id", "session_id", "manifest_url", "dataset_id", "test_session", "scored_at",
     "row_index", "participant_id", "task", "trial_number", "target_word",
     "expected_response", "expected_language", "audio_url", "source_path",
     "image_url", "condition", "accent_condition", "list", "word_number",
@@ -32,6 +32,7 @@
     customManifestField: document.getElementById("custom-manifest-field"),
     sourceSummary: document.getElementById("source-summary"),
     manifestUrl: document.getElementById("manifest-url"),
+    datasetSelect: document.getElementById("dataset-select"),
     taskFilterL2: document.getElementById("task-filter-l2"),
     taskFilterPicture: document.getElementById("task-filter-picture"),
     shuffleTrials: document.getElementById("shuffle-trials"),
@@ -89,6 +90,7 @@
   const state = {
     manifestItems: [],
     manifestUrl: "",
+    selectedDataset: "all",
     assignedParticipants: [],
     items: [],
     currentIndex: 0,
@@ -134,6 +136,15 @@
     if (value === "l2_to_l1") return "L2-to-L1";
     if (value === "picture_naming") return "Picture Naming";
     return "Task";
+  }
+
+  function datasetLabel(value) {
+    const text = String(value || "").trim();
+    if (!text || text === "all") return "All uploaded datasets";
+    return text
+      .replace(/^demo_/, "Demo ")
+      .replace(/_/g, " ")
+      .replace(/\b([a-z])/g, (match) => match.toUpperCase());
   }
 
   function csvCell(value) {
@@ -286,9 +297,14 @@
     if (task === "picture_naming" && referenceMs == null) referenceMs = 0;
 
     const trialNumber = trialNumberFromRow(row, index + 1);
+    const testSession = valueFrom(row, ["test_session", "session_code", "test_session_code", "audio_session"]);
+    const datasetId = valueFrom(row, ["dataset_id", "dataset", "recording_set", "data_set", "upload_batch"]) ||
+      (testSession ? `session_${testSession}` : "default");
     const item = {
       id: `${participantId}_${task}_${trialNumber}_${index + 1}`,
       row_index: index + 1,
+      dataset_id: datasetId,
+      test_session: testSession,
       participant_id: participantId,
       task,
       trial_number: trialNumber,
@@ -330,11 +346,57 @@
     return [...selectedTaskSet()].sort().join("|") || "none";
   }
 
+  function selectedDatasetKey() {
+    return els.datasetSelect?.value || "all";
+  }
+
   function syncCustomManifestVisibility() {
     els.customManifestField.classList.toggle("hidden", !els.customManifestToggle.checked);
     els.sourceSummary.textContent = els.customManifestToggle.checked
       ? "Custom manifest enabled"
       : `Default: ${DEFAULT_MANIFEST_URL}`;
+  }
+
+  function renderDatasetOptions(previousValue = state.selectedDataset || "all") {
+    const counts = new Map();
+    state.manifestItems.forEach((item) => {
+      const key = item.dataset_id || "default";
+      const entry = counts.get(key) || {
+        rows: 0,
+        participants: new Set(),
+        testSessions: new Set(),
+      };
+      entry.rows += 1;
+      entry.participants.add(item.participant_id);
+      if (item.test_session) entry.testSessions.add(item.test_session);
+      counts.set(key, entry);
+    });
+
+    els.datasetSelect.innerHTML = "";
+    const totalOption = document.createElement("option");
+    totalOption.value = "all";
+    totalOption.textContent = `All uploaded datasets (${state.manifestItems.length} recordings)`;
+    els.datasetSelect.append(totalOption);
+
+    [...counts.entries()]
+      .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+      .forEach(([key, info]) => {
+        const option = document.createElement("option");
+        const sessions = [...info.testSessions].sort().join("/");
+        option.value = key;
+        option.textContent = [
+          datasetLabel(key),
+          sessions ? `test ${sessions}` : "",
+          `${info.participants.size} participant${info.participants.size === 1 ? "" : "s"}`,
+          `${info.rows} recordings`,
+        ].filter(Boolean).join(" · ");
+        els.datasetSelect.append(option);
+      });
+
+    const values = [...els.datasetSelect.options].map((option) => option.value);
+    els.datasetSelect.value = values.includes(previousValue) ? previousValue : "all";
+    state.selectedDataset = els.datasetSelect.value;
+    els.datasetSelect.disabled = state.manifestItems.length === 0;
   }
 
   async function fetchCsv(url) {
@@ -354,6 +416,7 @@
     if (!items.length) {
       state.manifestItems = [];
       state.manifestUrl = "";
+      renderDatasetOptions("all");
       renderParticipants();
       throw new Error("Manifest rows need participant_id and audio_file or audio_url.");
     }
@@ -363,11 +426,14 @@
     state.items = [];
     state.assignedParticipants = [];
     state.scores = {};
+    renderDatasetOptions(state.selectedDataset);
     updateSetupSummary();
     renderParticipants();
     els.sourceSummary.textContent = els.customManifestToggle.checked ? `Loaded: ${url}` : `Default loaded: ${DEFAULT_MANIFEST_URL}`;
+    const datasetCount = new Set(items.map((item) => item.dataset_id)).size;
     setLog([
       `manifest_url: ${url}`,
+      `datasets: ${datasetCount}`,
       `usable_rows: ${items.length}`,
       `l2_to_l1: ${items.filter((item) => item.task === "l2_to_l1").length}`,
       `picture_naming: ${items.filter((item) => item.task === "picture_naming").length}`,
@@ -378,8 +444,9 @@
 
   function filteredManifestItems() {
     const tasks = selectedTaskSet();
+    const dataset = selectedDatasetKey();
     if (!tasks.size) return [];
-    return state.manifestItems.filter((item) => tasks.has(item.task));
+    return state.manifestItems.filter((item) => tasks.has(item.task) && (dataset === "all" || item.dataset_id === dataset));
   }
 
   function renderParticipants() {
@@ -465,6 +532,7 @@
       els.raterId.value.trim(),
       els.sessionId.value.trim(),
       state.manifestUrl,
+      selectedDatasetKey(),
       selectedTaskKey(),
       state.assignedParticipants.join("|"),
     ].join("::");
@@ -487,6 +555,7 @@
       rater_id: els.raterId.value.trim(),
       session_id: els.sessionId.value.trim(),
       manifest_url: state.manifestUrl,
+      dataset_filter: selectedDatasetKey(),
       task_filter: selectedTaskKey(),
       assigned_participants: state.assignedParticipants,
       current_index: state.currentIndex,
@@ -505,6 +574,7 @@
     if (!els.sessionId.value.trim()) {
       els.sessionId.value = `scoring_${new Date().toISOString().slice(0, 10)}`;
     }
+    state.selectedDataset = selectedDatasetKey();
 
     const assigned = selectedParticipants();
     const assignedSet = new Set(assigned);
@@ -543,6 +613,7 @@
     updateSetupSummary();
     setSetupStatus("Ready", true);
     setLog([
+      `dataset: ${datasetLabel(state.selectedDataset)}`,
       `assigned_participants: ${assigned.join(", ")}`,
       `prepared_trials: ${state.items.length}`,
       `saved_scores_loaded: ${Object.keys(state.scores).length}`,
@@ -636,6 +707,8 @@
       ? `Expected: ${item.expected_response} (${item.expected_language})`
       : "Expected response unavailable";
     els.trialMetadata.textContent = [
+      item.dataset_id ? `dataset=${item.dataset_id}` : "",
+      item.test_session ? `test=${item.test_session}` : "",
       item.condition ? `condition=${item.condition}` : "",
       item.accent_condition ? `accent=${item.accent_condition}` : "",
       item.list ? `list=${item.list}` : "",
@@ -1216,6 +1289,8 @@
         rater_id: raterId,
         session_id: sessionId,
         manifest_url: state.manifestUrl,
+        dataset_id: item.dataset_id,
+        test_session: item.test_session,
         scored_at: score.scored_at || "",
         row_index: item.row_index,
         participant_id: item.participant_id,
@@ -1272,6 +1347,7 @@
       rater_id: els.raterId.value.trim(),
       session_id: els.sessionId.value.trim(),
       manifest_url: state.manifestUrl,
+      dataset_filter: selectedDatasetKey(),
       assigned_participants: state.assignedParticipants,
       rows: buildExportRows(),
     }, null, 2), `${base}.json`, "application/json;charset=utf-8");
@@ -1300,6 +1376,16 @@
   });
   els.taskFilterL2.addEventListener("change", renderParticipants);
   els.taskFilterPicture.addEventListener("change", renderParticipants);
+  els.datasetSelect.addEventListener("change", () => {
+    state.selectedDataset = selectedDatasetKey();
+    state.items = [];
+    state.assignedParticipants = [];
+    state.scores = {};
+    els.startBtn.disabled = true;
+    els.exportCsvBtn.disabled = true;
+    els.exportJsonBtn.disabled = true;
+    renderParticipants();
+  });
   els.raterId.addEventListener("input", updateSetupSummary);
   els.selectAllBtn.addEventListener("click", () => {
     els.participantGrid.querySelectorAll("input").forEach((input) => {

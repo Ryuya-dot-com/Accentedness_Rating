@@ -226,14 +226,22 @@ label {
 }
 
 .checkbox-label {
-  align-content: end;
+  align-items: center;
   display: flex;
   gap: 9px;
-  min-height: 68px;
+  min-height: auto;
+  padding-top: 27px;
 }
 
 .checkbox-label input {
   inline-size: auto;
+}
+
+.field-note {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .source-card {
@@ -281,12 +289,17 @@ label {
 .source-option {
   align-items: center;
   min-height: auto;
+  padding-top: 0;
 }
 
 .source-summary {
   color: var(--ink-muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.dataset-control {
+  max-width: 440px;
 }
 
 .custom-field {

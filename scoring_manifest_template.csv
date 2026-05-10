@@ -1,3 +1,3 @@
-participant_id,task,trial_number,target_word,expected_response,expected_language,audio_file,audio_url,image_file,image_url,stimulus_end_ms,image_onset_ms_rel,onset_ms_auto,offset_ms_auto,latency_ms_auto,condition,accent_condition,list,word_number,notes
-001,l2_to_l1,1,icicle,つらら,L1,recordings/001/l2_to_l1/001_trial001_icicle.wav,,,,950,,1820,,870,immediate,japanese,2,15,
-001,picture_naming,1,icicle,icicle,L2,recordings/001/picture_naming/001_icicle.wav,,images/icicle.jpg,,0,0,1410,,1410,immediate,japanese,2,15,
+dataset_id,test_session,participant_id,task,trial_number,target_word,expected_response,expected_language,recording_file,audio_url,image_file,image_url,stimulus_end_ms,image_onset_ms_rel,onset_ms_auto,offset_ms_auto,latency_ms_auto,condition,accent_condition,list,word_number,notes
+session_E,E,001,l2_to_l1,1,icicle,つらら,L1,recordings/001/l2_to_l1/001_trial001_icicle.wav,,,,950,,1820,,870,immediate,japanese,2,15,
+session_E,E,001,picture_naming,1,icicle,icicle,L2,recordings/001/picture_naming/001_icicle.wav,,images/icicle.jpg,,0,0,1410,,1410,immediate,japanese,2,15,

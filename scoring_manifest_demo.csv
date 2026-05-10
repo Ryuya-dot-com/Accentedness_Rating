@@ -1,25 +1,25 @@
 dataset_id,test_session,participant_id,task,trial_number,target_word,expected_response,expected_language,recording_file,image_file,stimulus_end_ms,image_onset_ms_rel,onset_ms_auto,offset_ms_auto,latency_ms_auto,condition,accent_condition,list,word_number,notes
-demo_E,E,demo_E_001,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_E/demo_E_001/l2_to_l1/demo_E_001_l2_001_chocolate.mp3,,150,,430,1080,280,pilot_demo,english,demo,1,synthetic demo recording
-demo_E,E,demo_E_001,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_E/demo_E_001/l2_to_l1/demo_E_001_l2_002_coffee.mp3,,150,,410,1010,260,pilot_demo,english,demo,2,synthetic demo recording
-demo_E,E,demo_E_001,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_E/demo_E_001/picture_naming/demo_E_001_pn_003_pizza.mp3,,,0,310,950,310,pilot_demo,english,demo,3,synthetic demo recording
-demo_E,E,demo_E_001,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_E/demo_E_001/picture_naming/demo_E_001_pn_004_sofa.mp3,,,0,340,990,340,pilot_demo,english,demo,4,synthetic demo recording
-demo_E,E,demo_E_002,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_E/demo_E_002/l2_to_l1/demo_E_002_l2_001_chocolate.mp3,,150,,460,1160,310,pilot_demo,english,demo,1,synthetic demo recording
-demo_E,E,demo_E_002,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_E/demo_E_002/l2_to_l1/demo_E_002_l2_002_coffee.mp3,,150,,440,1060,290,pilot_demo,english,demo,2,synthetic demo recording
-demo_E,E,demo_E_002,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_E/demo_E_002/picture_naming/demo_E_002_pn_003_pizza.mp3,,,0,330,1030,330,pilot_demo,english,demo,3,synthetic demo recording
-demo_E,E,demo_E_002,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_E/demo_E_002/picture_naming/demo_E_002_pn_004_sofa.mp3,,,0,360,1040,360,pilot_demo,english,demo,4,synthetic demo recording
-demo_J,J,demo_J_001,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_J/demo_J_001/l2_to_l1/demo_J_001_l2_001_chocolate.mp3,,150,,500,1210,350,pilot_demo,japanese,demo,1,synthetic demo recording
-demo_J,J,demo_J_001,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_J/demo_J_001/l2_to_l1/demo_J_001_l2_002_coffee.mp3,,150,,470,1140,320,pilot_demo,japanese,demo,2,synthetic demo recording
-demo_J,J,demo_J_001,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_J/demo_J_001/picture_naming/demo_J_001_pn_003_pizza.mp3,,,0,390,1090,390,pilot_demo,japanese,demo,3,synthetic demo recording
-demo_J,J,demo_J_001,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_J/demo_J_001/picture_naming/demo_J_001_pn_004_sofa.mp3,,,0,410,1120,410,pilot_demo,japanese,demo,4,synthetic demo recording
-demo_J,J,demo_J_002,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_J/demo_J_002/l2_to_l1/demo_J_002_l2_001_chocolate.mp3,,150,,520,1230,370,pilot_demo,japanese,demo,1,synthetic demo recording
-demo_J,J,demo_J_002,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_J/demo_J_002/l2_to_l1/demo_J_002_l2_002_coffee.mp3,,150,,490,1170,340,pilot_demo,japanese,demo,2,synthetic demo recording
-demo_J,J,demo_J_002,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_J/demo_J_002/picture_naming/demo_J_002_pn_003_pizza.mp3,,,0,400,1120,400,pilot_demo,japanese,demo,3,synthetic demo recording
-demo_J,J,demo_J_002,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_J/demo_J_002/picture_naming/demo_J_002_pn_004_sofa.mp3,,,0,430,1160,430,pilot_demo,japanese,demo,4,synthetic demo recording
-demo_C,C,demo_C_001,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_C/demo_C_001/l2_to_l1/demo_C_001_l2_001_chocolate.mp3,,150,,480,1130,330,pilot_demo,chinese,demo,1,synthetic demo recording
-demo_C,C,demo_C_001,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_C/demo_C_001/l2_to_l1/demo_C_001_l2_002_coffee.mp3,,150,,455,1075,305,pilot_demo,chinese,demo,2,synthetic demo recording
-demo_C,C,demo_C_001,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_C/demo_C_001/picture_naming/demo_C_001_pn_003_pizza.mp3,,,0,350,1010,350,pilot_demo,chinese,demo,3,synthetic demo recording
-demo_C,C,demo_C_001,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_C/demo_C_001/picture_naming/demo_C_001_pn_004_sofa.mp3,,,0,380,1040,380,pilot_demo,chinese,demo,4,synthetic demo recording
-demo_C,C,demo_C_002,l2_to_l1,1,chocolate,チョコレート,L1,recordings/demo/demo_C/demo_C_002/l2_to_l1/demo_C_002_l2_001_chocolate.mp3,,150,,510,1180,360,pilot_demo,chinese,demo,1,synthetic demo recording
-demo_C,C,demo_C_002,l2_to_l1,2,coffee,コーヒー,L1,recordings/demo/demo_C/demo_C_002/l2_to_l1/demo_C_002_l2_002_coffee.mp3,,150,,470,1100,320,pilot_demo,chinese,demo,2,synthetic demo recording
-demo_C,C,demo_C_002,picture_naming,3,pizza,pizza,L2,recordings/demo/demo_C/demo_C_002/picture_naming/demo_C_002_pn_003_pizza.mp3,,,0,370,1060,370,pilot_demo,chinese,demo,3,synthetic demo recording
-demo_C,C,demo_C_002,picture_naming,4,sofa,sofa,L2,recordings/demo/demo_C/demo_C_002/picture_naming/demo_C_002_pn_004_sofa.mp3,,,0,400,1090,400,pilot_demo,chinese,demo,4,synthetic demo recording
+placeholder_E,E,P001,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P001/l2_to_l1/P001_l2_001_chocolate.mp3,,150,,430,1080,280,placeholder,english,demo,1,placeholder recording for scorer training
+placeholder_E,E,P001,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P001/l2_to_l1/P001_l2_002_coffee.mp3,,150,,410,1010,260,placeholder,english,demo,2,placeholder recording for scorer training
+placeholder_E,E,P001,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P001/picture_naming/P001_pn_003_pizza.mp3,,,0,310,950,310,placeholder,english,demo,3,placeholder recording for scorer training
+placeholder_E,E,P001,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P001/picture_naming/P001_pn_004_sofa.mp3,,,0,340,990,340,placeholder,english,demo,4,placeholder recording for scorer training
+placeholder_E,E,P002,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P002/l2_to_l1/P002_l2_001_chocolate.mp3,,150,,460,1160,310,placeholder,english,demo,1,placeholder recording for scorer training
+placeholder_E,E,P002,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P002/l2_to_l1/P002_l2_002_coffee.mp3,,150,,440,1090,290,placeholder,english,demo,2,placeholder recording for scorer training
+placeholder_E,E,P002,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P002/picture_naming/P002_pn_003_pizza.mp3,,,0,330,1030,330,placeholder,english,demo,3,placeholder recording for scorer training
+placeholder_E,E,P002,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P002/picture_naming/P002_pn_004_sofa.mp3,,,0,360,1070,360,placeholder,english,demo,4,placeholder recording for scorer training
+placeholder_J,J,P003,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P003/l2_to_l1/P003_l2_001_chocolate.mp3,,150,,500,1210,350,placeholder,japanese,demo,1,placeholder recording for scorer training
+placeholder_J,J,P003,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P003/l2_to_l1/P003_l2_002_coffee.mp3,,150,,480,1140,330,placeholder,japanese,demo,2,placeholder recording for scorer training
+placeholder_J,J,P003,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P003/picture_naming/P003_pn_003_pizza.mp3,,,0,390,1090,390,placeholder,japanese,demo,3,placeholder recording for scorer training
+placeholder_J,J,P003,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P003/picture_naming/P003_pn_004_sofa.mp3,,,0,420,1130,420,placeholder,japanese,demo,4,placeholder recording for scorer training
+placeholder_J,J,P004,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P004/l2_to_l1/P004_l2_001_chocolate.mp3,,150,,520,1230,370,placeholder,japanese,demo,1,placeholder recording for scorer training
+placeholder_J,J,P004,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P004/l2_to_l1/P004_l2_002_coffee.mp3,,150,,500,1160,350,placeholder,japanese,demo,2,placeholder recording for scorer training
+placeholder_J,J,P004,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P004/picture_naming/P004_pn_003_pizza.mp3,,,0,400,1120,400,placeholder,japanese,demo,3,placeholder recording for scorer training
+placeholder_J,J,P004,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P004/picture_naming/P004_pn_004_sofa.mp3,,,0,430,1160,430,placeholder,japanese,demo,4,placeholder recording for scorer training
+placeholder_C,C,P005,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P005/l2_to_l1/P005_l2_001_chocolate.mp3,,150,,480,1130,330,placeholder,chinese,demo,1,placeholder recording for scorer training
+placeholder_C,C,P005,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P005/l2_to_l1/P005_l2_002_coffee.mp3,,150,,460,1060,310,placeholder,chinese,demo,2,placeholder recording for scorer training
+placeholder_C,C,P005,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P005/picture_naming/P005_pn_003_pizza.mp3,,,0,350,1010,350,placeholder,chinese,demo,3,placeholder recording for scorer training
+placeholder_C,C,P005,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P005/picture_naming/P005_pn_004_sofa.mp3,,,0,380,1050,380,placeholder,chinese,demo,4,placeholder recording for scorer training
+placeholder_C,C,P006,l2_to_l1,1,chocolate,チョコレート,L1,recordings/placeholders/P006/l2_to_l1/P006_l2_001_chocolate.mp3,,150,,510,1180,360,placeholder,chinese,demo,1,placeholder recording for scorer training
+placeholder_C,C,P006,l2_to_l1,2,coffee,コーヒー,L1,recordings/placeholders/P006/l2_to_l1/P006_l2_002_coffee.mp3,,150,,490,1110,340,placeholder,chinese,demo,2,placeholder recording for scorer training
+placeholder_C,C,P006,picture_naming,3,pizza,pizza,L2,recordings/placeholders/P006/picture_naming/P006_pn_003_pizza.mp3,,,0,370,1060,370,placeholder,chinese,demo,3,placeholder recording for scorer training
+placeholder_C,C,P006,picture_naming,4,sofa,sofa,L2,recordings/placeholders/P006/picture_naming/P006_pn_004_sofa.mp3,,,0,400,1100,400,placeholder,chinese,demo,4,placeholder recording for scorer training

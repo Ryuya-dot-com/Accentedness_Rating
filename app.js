@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.5";
+  const VERSION = "production_scoring_v0.5.6";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -137,9 +137,9 @@
 
   function selectedTestLabel() {
     const value = els.testSelect.value;
-    if (value === "l2_to_l1") return "L2-to-L1";
-    if (value === "picture_naming") return "Picture Naming";
-    return "All";
+    if (value === "l2_to_l1") return "L2-to-L1 only";
+    if (value === "picture_naming") return "Picture Naming only";
+    return "Both tasks";
   }
 
   function csvCell(value) {
@@ -576,7 +576,7 @@
     updateSetupSummary();
     setSetupStatus("Ready", true);
     setLog([
-      `test: ${selectedTestLabel()}`,
+      `task_filter: ${selectedTestLabel()}`,
       `assigned_participants: ${assigned.join(", ")}`,
       `prepared_trials: ${state.items.length}`,
       `shuffle_seed: rater_id`,

@@ -27,12 +27,12 @@ http://127.0.0.1:8765/
 
 ## Participant Checkbox Workflow
 
-The platform is CSV-driven, but raters do not need to type a manifest URL or choose experimental conditions during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows `Rater ID`, `Test to score`, and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
+The platform is CSV-driven, but raters do not need to type a manifest URL or choose experimental conditions during normal use. The default `scoring_manifest_demo.csv` loads automatically, then the setup screen shows `Rater ID`, `Task to score`, and participant checkboxes. A custom manifest URL is available only through `Use a different scoring manifest`.
 
 Recommended rater flow:
 
 1. Enter `Rater ID`.
-2. Choose `Test to score`.
+2. Choose `Task to score`.
 3. Check the participant ID(s) assigned to the rater.
 4. Click `Prepare scoring queue`.
 5. Click `Start scoring`.
@@ -41,7 +41,7 @@ Experimental condition and test-session metadata such as `E`, `J`, and `C` shoul
 
 The scoring queue is shuffled automatically. The deterministic seed is based on the rater ID plus the selected test, manifest, and participant set, so the same rater assignment can be resumed with the same order.
 
-The bundled demo manifest includes 24 synthetic MP3 files under `recordings/demo/`: `demo_E`, `demo_J`, and `demo_C`, with two anonymized participant IDs per dataset.
+The bundled placeholder manifest includes 24 synthetic MP3 files under `recordings/placeholders/`: `P001` through `P006`, with four recordings per participant. Experimental condition and test-session metadata remain in `scoring_manifest_demo.csv` and the exported CSV/JSON, but raters only see anonymized participant IDs.
 
 Upload recordings to GitHub Pages, raw GitHub, or another static host, and keep the manifest next to the platform or point the custom manifest option to the manifest CSV.
 

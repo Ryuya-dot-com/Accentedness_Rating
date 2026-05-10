@@ -20,7 +20,7 @@
         <div class="panel-heading">
           <div>
             <h2>Scoring setup</h2>
-            <p>Enter the rater ID, choose the test and participant IDs, then start scoring the uploaded recordings.</p>
+            <p>Enter the rater ID, choose the task, select participant IDs, then start scoring.</p>
           </div>
           <div class="setup-status" id="setup-status">Loading recordings</div>
         </div>
@@ -35,7 +35,7 @@
             <strong id="status-participants">0</strong>
           </div>
           <div>
-            <span>Test</span>
+            <span>Task</span>
             <strong id="status-assigned">0</strong>
           </div>
           <div>
@@ -53,11 +53,11 @@
                 <input id="rater-id" type="text" autocomplete="off" placeholder="rater001" />
               </label>
               <label>
-                Test to score
+                Task to score
                 <select id="test-select">
-                  <option value="all">All production tests</option>
-                  <option value="picture_naming">Picture Naming Task</option>
-                  <option value="l2_to_l1">L2-to-L1 Translation Task</option>
+                  <option value="all">Both production tasks</option>
+                  <option value="picture_naming">Picture Naming only</option>
+                  <option value="l2_to_l1">L2-to-L1 only</option>
                 </select>
               </label>
               <input id="session-id" type="hidden" value="auto" />
@@ -72,8 +72,8 @@
             <div class="source-card primary-source">
               <div class="source-heading">
                 <p class="source-kicker">GitHub recording set</p>
-                <h4>Uploaded scoring manifest</h4>
-                <p>Condition, participant, and test-session metadata are kept in the output file.</p>
+                <h4>Placeholder scoring set</h4>
+                <p>The default set contains P001-P006 and is ready for scoring practice.</p>
               </div>
               <div class="source-summary" id="source-summary">Default: scoring_manifest_demo.csv</div>
 
@@ -103,7 +103,7 @@
                 <button id="clear-all-btn" class="secondary" disabled>Clear</button>
               </div>
             </div>
-            <div id="participant-grid" class="participant-grid empty">No manifest loaded.</div>
+            <div id="participant-grid" class="participant-grid empty">Loading participant IDs...</div>
           </section>
         </div>
 
@@ -228,9 +228,9 @@
               <fieldset class="score-block">
                 <legend>Timing</legend>
                 <div class="onset-buttons" id="onset-buttons">
-                  <button data-onset="confirmed" class="onset-button secondary">Confirm</button>
+                  <button data-onset="confirmed" class="onset-button secondary">Use auto</button>
                   <button data-onset="corrected" class="onset-button secondary">Correct</button>
-                  <button data-onset="manual" class="onset-button secondary">Manual set</button>
+                  <button data-onset="manual" class="onset-button secondary">Set manually</button>
                   <button data-onset="no_speech" class="onset-button secondary">No speech</button>
                 </div>
                 <div class="onset-input-row">

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "production_scoring_v0.5.4";
+  const VERSION = "production_scoring_v0.5.5";
   const DEFAULT_MANIFEST_URL = "scoring_manifest_demo.csv";
   const AUDIO_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
   const AUDIO_FILE_COLUMNS = ["recording_file", "audio_file", "file", "filename", "path"];
@@ -10,7 +10,7 @@
   const EXPORT_COLUMNS = [
     "platform_version", "rater_id", "session_id", "manifest_url", "dataset_id", "test_session", "scored_at",
     "row_index", "participant_id", "task", "trial_number", "target_word",
-    "expected_response", "expected_language", "audio_url", "source_path",
+    "expected_response", "expected_language", "audio_url", "source_path", "audio_play_count",
     "image_url", "condition", "accent_condition", "list", "word_number",
     "accuracy_score", "onset_status", "onset_ms_auto", "onset_ms_rater",
     "offset_status", "offset_ms_auto", "offset_ms_rater", "duration_ms_rater",
@@ -98,6 +98,7 @@
     markerMode: null,
     draggingMarker: null,
     audioReady: false,
+    audioPlayCount: 0,
   };
 
   function normalizeHeader(value) {
@@ -649,6 +650,18 @@
     updateProgress();
   }
 
+  function recordAudioPlayback(item) {
+    if (!item) return;
+    const score = scoreFor(item);
+    const count = Number(score.audio_play_count || 0) + 1;
+    state.audioPlayCount = count;
+    state.scores[item.id] = {
+      ...score,
+      audio_play_count: count,
+    };
+    saveSession();
+  }
+
   function showItem(index) {
     cleanupAudio();
     state.currentIndex = Math.max(0, Math.min(index, state.items.length - 1));
@@ -775,6 +788,7 @@
   function loadAudio(item) {
     state.waveform = null;
     state.audioReady = false;
+    state.audioPlayCount = Number(scoreFor(item).audio_play_count || 0);
     drawWaveform();
     els.audioStatus.textContent = "Loading audio...";
     els.audioTime.textContent = "0.000s / 0.000s";
@@ -802,7 +816,7 @@
       drawWaveform();
     });
     audio.addEventListener("ended", () => {
-      els.playBtn.textContent = "Play";
+      els.playBtn.textContent = "Replay";
       drawWaveform();
     });
     audio.addEventListener("error", () => {
@@ -810,7 +824,8 @@
       els.playBtn.disabled = true;
       els.stopBtn.disabled = true;
       els.playOnsetBtn.disabled = true;
-      els.audioStatus.textContent = "Audio could not be loaded.";
+      els.audioStatus.textContent = "Audio could not be loaded. Check the manifest path.";
+      console.warn("Audio could not be loaded:", item.audio_url);
     });
 
     loadWaveform(item.audio_url)
@@ -954,11 +969,16 @@
   }
 
   async function playAudio() {
+    const item = currentItem();
     const audio = state.currentAudio;
     if (!audio || !state.audioReady) return;
     audio.playbackRate = Number.parseFloat(els.speedSelect.value) || 1;
     if (audio.paused) {
+      if (audio.ended || audio.currentTime >= Math.max(0, audio.duration - 0.02)) {
+        audio.currentTime = 0;
+      }
       await audio.play();
+      recordAudioPlayback(item);
       els.playBtn.textContent = "Pause";
       animateWaveform();
     } else {
@@ -995,6 +1015,7 @@
     if (onsetMs == null) return;
     audio.currentTime = Math.max(0, Number(onsetMs) / 1000 - 0.2);
     audio.play().then(() => {
+      recordAudioPlayback(item);
       els.playBtn.textContent = "Pause";
       animateWaveform();
     });
@@ -1264,6 +1285,7 @@
         expected_language: item.expected_language,
         audio_url: item.audio_url,
         source_path: item.source_path,
+        audio_play_count: score.audio_play_count || "",
         image_url: item.image_url,
         condition: item.condition,
         accent_condition: item.accent_condition,

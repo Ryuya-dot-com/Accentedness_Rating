@@ -41,7 +41,7 @@ Experimental condition and test-session metadata such as `E`, `J`, and `C` shoul
 
 The scoring queue is shuffled automatically. The deterministic seed is based on the rater ID plus the selected test, manifest, and participant set, so the same rater assignment can be resumed with the same order.
 
-The bundled demo manifest includes 24 synthetic WAV files under `recordings/demo/`: `demo_E`, `demo_J`, and `demo_C`, with two anonymized participant IDs per dataset.
+The bundled demo manifest includes 24 synthetic MP3 files under `recordings/demo/`: `demo_E`, `demo_J`, and `demo_C`, with two anonymized participant IDs per dataset.
 
 Upload recordings to GitHub Pages, raw GitHub, or another static host, and keep the manifest next to the platform or point the custom manifest option to the manifest CSV.
 
@@ -56,9 +56,9 @@ Accentedness_Rating/
   recordings/
     001/
       l2_to_l1/
-        001_trial001_icicle.wav
+        001_trial001_icicle.mp3
       picture_naming/
-        001_icicle.wav
+        001_icicle.mp3
 ```
 
 For recordings collected with `Accentedness_Tests`, generate this manifest from the `Accentedness_Tests` repository root with:
@@ -114,6 +114,7 @@ Accuracy scores:
 
 Timing controls:
 
+- After playback finishes, click `Replay` to listen again. Playback starts are saved as `audio_play_count`.
 - Red marker: response onset.
 - Orange marker: response offset.
 - Click `Move onset` or `Move offset`, then click or drag on the waveform to set the marker.
@@ -145,6 +146,7 @@ Exports include one row per prepared recording, including unscored rows. Main ou
 - `target_word`
 - `expected_response`
 - `audio_url`
+- `audio_play_count`
 - `accuracy_score`
 - `onset_status`
 - `onset_ms_auto`

@@ -1,4 +1,7 @@
-import { buildCounterbalancedAssignment } from "../functions/api/_counterbalance.js";
+import {
+  COUNTERBALANCE_CELLS,
+  buildCounterbalancedAssignment,
+} from "../functions/api/_counterbalance.js";
 
 const lists = "ABCDEFGHIJ".split("");
 const materials = [];
@@ -41,13 +44,6 @@ for (const stimulusList of lists) {
   }
 }
 
-const cells = [
-  { cell_id: 1, list_comb: "ABCD", pronunciation_style: "a" },
-  { cell_id: 10, list_comb: "JABC", pronunciation_style: "a" },
-  { cell_id: 11, list_comb: "ABCD", pronunciation_style: "b" },
-  { cell_id: 20, list_comb: "JABC", pronunciation_style: "b" },
-];
-
 function assertNoLongConstrainedRun(assignment) {
   let previous = "";
   let runLength = 0;
@@ -61,7 +57,7 @@ function assertNoLongConstrainedRun(assignment) {
   }
 }
 
-for (const cell of cells) {
+for (const cell of COUNTERBALANCE_CELLS) {
   const assignment = buildCounterbalancedAssignment(materials, cell, "verify-seed");
   if (assignment.length !== 100) {
     throw new Error(`Cell ${cell.cell_id} generated ${assignment.length} trials, expected 100.`);

@@ -43,11 +43,13 @@ export function requireDb(env) {
 }
 
 export function requireAdmin(request, env) {
-  const token = env.ADMIN_TOKEN || "";
-  if (!token) return;
-  const url = new URL(request.url);
-  const received =
-    request.headers.get("x-admin-token") || url.searchParams.get("token") || "";
+  const token = cleanText(env.ADMIN_TOKEN);
+  if (!token) {
+    const err = new Error("Admin authorization is not configured.");
+    err.status = 500;
+    throw err;
+  }
+  const received = cleanText(request.headers.get("x-admin-token"));
   if (received !== token) {
     const err = new Error("Admin authorization failed.");
     err.status = 401;

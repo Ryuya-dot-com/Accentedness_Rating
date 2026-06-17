@@ -14,6 +14,16 @@ import {
   safeJson,
 } from "./_utils.js";
 
+function normalizeResponse(value) {
+  return cleanText(value)
+    .toLowerCase()
+    .replace(/[^a-z]/g, "");
+}
+
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value) !== "";
+}
+
 export async function onRequestPost(context) {
   try {
     const db = requireDb(context.env);
@@ -29,17 +39,38 @@ export async function onRequestPost(context) {
     const session = await db
       .prepare(
         `SELECT id, rater_id, session_label, task_mode, platform_version,
-          prolific_pid, prolific_study_id, prolific_session_id
+          prolific_pid, prolific_study_id, prolific_session_id, trial_count
          FROM sessions WHERE id = ?`,
       )
       .bind(serverSessionId)
       .first();
     if (!session) return errorResponse("Session was not found.", 404);
 
+    const assignment = await db
+      .prepare(
+        `SELECT *
+         FROM rating_assignments
+         WHERE session_id = ? AND phase = ? AND trial_index = ?`,
+      )
+      .bind(serverSessionId, phase, trialIndex)
+      .first();
+    if (!assignment) {
+      return errorResponse("Assignment was not found for this session/trial.", 409);
+    }
+
     const receivedAt = nowIso();
     const client = requestClientContext(context.request, body);
-    const assignmentId = `${serverSessionId}:${phase}:${trialIndex}`;
+    const assignmentId = assignment.id;
     const trialId = assignmentId;
+    const typedResponse = cleanText(row.typed_response);
+    const normalizedResponse = normalizeResponse(typedResponse);
+    const normalizedTarget = normalizeResponse(assignment.target_word);
+    const shouldScoreIntelligibility = Boolean(
+      normalizedTarget &&
+        (hasValue(row.typed_response) ||
+          hasValue(row.normalized_response) ||
+          hasValue(row.intelligibility_exact)),
+    );
 
     await db
       .prepare(
@@ -78,44 +109,48 @@ export async function onRequestPost(context) {
         nullableText(session.prolific_session_id || client.prolific_session_id),
         cleanText(session.task_mode || row.task_mode),
         cleanText(session.platform_version || row.platform_version),
-        phase,
-        nullableText(row.practice_kind),
-        nullableText(row.practice_group),
-        nullableInt(row.counterbalance_cell),
-        nullableText(row.list_comb),
-        nullableText(row.pronunciation_style),
-        nullableText(row.stimulus_list),
-        nullableText(row.l1_condition),
-        nullableText(row.pronunciation_condition),
+        cleanText(assignment.phase),
+        nullableText(assignment.practice_kind),
+        nullableText(assignment.practice_group),
+        nullableInt(assignment.counterbalance_cell),
+        nullableText(assignment.list_comb),
+        nullableText(assignment.pronunciation_style),
+        nullableText(assignment.stimulus_list),
+        nullableText(assignment.l1_condition),
+        nullableText(assignment.pronunciation_condition),
         trialIndex,
-        nullableInt(row.trial_total) || 0,
+        nullableInt(session.trial_count) || nullableInt(row.trial_total) || 0,
         nullableText(row.completed_at) || receivedAt,
         nullableText(row.played_at),
-        nullableText(row.source_path),
-        nullableText(row.audio_url),
-        nullableText(row.file_name),
-        nullableText(row.participant_id),
-        nullableText(row.native_language),
-        nullableText(row.accent_condition),
-        nullableText(row.condition),
-        nullableText(row.talker),
-        nullableText(row.pass_number),
-        nullableText(row.word_number),
-        nullableText(row.trial_number),
-        nullableText(row.take_number),
-        nullableText(row.spoken_form),
-        nullableText(row.practice_note),
-        nullableText(row.source_format),
-        nullableText(row.target_word),
-        nullableText(row.typed_response),
-        nullableText(row.normalized_response),
-        nullableText(row.normalized_target),
-        boolToInt(row.intelligibility_exact),
-        boolToInt(row.intelligibility_needs_manual_review),
+        nullableText(assignment.source_path),
+        nullableText(assignment.audio_url),
+        nullableText(assignment.file_name),
+        nullableText(assignment.participant_id),
+        nullableText(assignment.native_language),
+        nullableText(assignment.accent_condition),
+        nullableText(assignment.condition),
+        nullableText(assignment.talker),
+        nullableText(assignment.pass_number),
+        nullableText(assignment.word_number),
+        nullableText(assignment.trial_number),
+        nullableText(assignment.take_number),
+        nullableText(assignment.spoken_form),
+        nullableText(assignment.practice_note),
+        nullableText(assignment.source_format),
+        nullableText(assignment.target_word),
+        nullableText(typedResponse),
+        nullableText(normalizedResponse),
+        nullableText(normalizedTarget),
+        shouldScoreIntelligibility
+          ? Number(normalizedResponse === normalizedTarget)
+          : boolToInt(row.intelligibility_exact),
+        shouldScoreIntelligibility
+          ? Number(normalizedResponse !== normalizedTarget)
+          : boolToInt(row.intelligibility_needs_manual_review),
         nullableInt(row.comprehensibility_1_9),
         nullableInt(row.accentedness_1_9),
-        nullableInt(row.expert_comprehensibility_1_9),
-        nullableInt(row.expert_accentedness_1_9),
+        nullableInt(assignment.expert_comprehensibility_1_9),
+        nullableInt(assignment.expert_accentedness_1_9),
         nullableText(row.practice_feedback),
         boolToInt(row.practice_requires_reason),
         nullableText(row.practice_reason),
@@ -150,10 +185,10 @@ export async function onRequestPost(context) {
       trial_index: trialIndex,
       event_at: receivedAt,
       payload: {
-        phase,
-        practice_kind: row.practice_kind,
-        file_name: row.file_name,
-        target_word: row.target_word,
+        phase: assignment.phase,
+        practice_kind: assignment.practice_kind,
+        file_name: assignment.file_name,
+        target_word: assignment.target_word,
         submit_rt_ms: row.submit_rt_ms,
       },
     });

@@ -57,11 +57,12 @@ Root directory: /
 ```text
 D1 binding name: DB
 Pages secret: ADMIN_TOKEN
+Optional Pages secret: COUNTERBALANCE_MANIFEST_URL
 ```
 
 6. Create and initialize D1 with the SQL commands below.
 
-GitHub should contain code, schema, templates, and non-sensitive demo files only. Participant responses, admin tokens, and private audio assets should remain in Cloudflare D1/R2/Secrets or other approved storage.
+GitHub should contain code, schema, templates, and non-sensitive demo files only. Participant responses, admin tokens, private manifest URLs, and private audio assets should remain in Cloudflare D1/R2/Secrets or other approved storage.
 
 ## 1. Install and Log In to Wrangler
 
@@ -157,6 +158,14 @@ If you already created the D1 database before the counterbalance tables/columns 
 npx wrangler d1 execute accentedness-rating --remote --file=./db/migrations/0002_counterbalance.sql
 ```
 
+For an existing database, apply the hardening migration after `0002_counterbalance.sql`. It adds Prolific duplicate-start protection indexes and can be run more than once:
+
+```sh
+npx wrangler d1 execute accentedness-rating --remote --file=./db/migrations/0003_hardening.sql
+```
+
+If this fails because duplicate Prolific IDs already exist in a pilot database, export `sessions.csv`, resolve or archive the duplicate pilot rows, and rerun the migration.
+
 ## 6. Set the Admin Secret
 
 Generate a token:
@@ -174,6 +183,16 @@ npx wrangler pages secret put ADMIN_TOKEN --project-name accentedness-rating-pla
 Paste the generated token when prompted. Save the token securely; it is required for `/admin/`.
 
 Do not put `ADMIN_TOKEN` in `wrangler.toml`.
+
+The admin API fails closed when `ADMIN_TOKEN` is not configured.
+
+If the production stimulus manifest should not be stored as a public `remote_manifest.csv`, set the server-side manifest URL as a Pages secret:
+
+```sh
+npx wrangler pages secret put COUNTERBALANCE_MANIFEST_URL --project-name accentedness-rating-platform
+```
+
+When this secret is set, `/api/session/start` uses it as the authoritative counterbalance manifest. The browser-side custom manifest field is only a preview/manual-workflow aid.
 
 ## 7. Deploy
 
@@ -242,8 +261,8 @@ Before running the actual study:
 
 - Replace placeholder practice audio and expert ratings in `app.js`.
 - Replace the placeholder Prolific completion code.
-- Confirm that `remote_manifest.csv` points to the final audio files.
-- Confirm that `remote_manifest.csv` includes `word_number`, `l1_condition`, and `pronunciation_condition` for the counterbalanced stimulus pool.
+- Confirm that the server-side manifest source points to the final audio files: either public `remote_manifest.csv` or the `COUNTERBALANCE_MANIFEST_URL` Pages secret.
+- Confirm that the server-side manifest includes `word_number`, `l1_condition`, and `pronunciation_condition` for the counterbalanced stimulus pool.
 - Confirm that the intended D1 data location or jurisdiction is acceptable for the ethics and data management plan.
 - Confirm that `/admin/` requires the real `ADMIN_TOKEN`.
 - Complete at least one full pilot run and download all five CSV files from `/admin/`.

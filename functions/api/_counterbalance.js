@@ -15,6 +15,9 @@ const LIST_COMBINATIONS = [
   "IJAB",
   "JABC",
 ];
+const DEFAULT_COUNTERBALANCE_MANIFEST = "remote_manifest.csv";
+const MANIFEST_FILE_COLUMNS = ["audio_file", "file", "filename", "path"];
+const MANIFEST_URL_COLUMNS = ["audio_url", "url", "source_url", "raw_url"];
 
 const LIST_SPECS = {
   A: { AME: range(1, 5), JPN: range(6, 15), CHN: range(16, 25) },
@@ -179,6 +182,145 @@ function readField(row, names) {
   return "";
 }
 
+function normalizeHeader(value) {
+  return cleanText(value)
+    .replace(/^\uFEFF/, "")
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+  const source = String(text || "");
+
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    const next = source[i + 1];
+    if (quoted) {
+      if (ch === '"' && next === '"') {
+        cell += '"';
+        i += 1;
+      } else if (ch === '"') {
+        quoted = false;
+      } else {
+        cell += ch;
+      }
+    } else if (ch === '"') {
+      quoted = true;
+    } else if (ch === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (ch === "\n") {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else if (ch !== "\r") {
+      cell += ch;
+    }
+  }
+
+  row.push(cell);
+  if (row.some((value) => cleanText(value))) rows.push(row);
+  if (!rows.length) return [];
+
+  const headers = rows[0].map((header) => normalizeHeader(header));
+  return rows
+    .slice(1)
+    .filter((values) => values.some((value) => cleanText(value)))
+    .map((values) =>
+      Object.fromEntries(headers.map((header, index) => [header, values[index] || ""])),
+    );
+}
+
+function fileNameFromPath(value, fallback) {
+  const name = cleanText(value).replaceAll("\\", "/").split("/").pop();
+  return name || fallback;
+}
+
+function resolveManifestUrl(value, manifestUrl) {
+  const text = cleanText(value);
+  if (!text) return "";
+  try {
+    return new URL(text, manifestUrl).toString();
+  } catch (error) {
+    return text;
+  }
+}
+
+function manifestRowToMaterial(row, manifestUrl, index) {
+  const directUrl = readField(row, MANIFEST_URL_COLUMNS);
+  const filePath = readField(row, MANIFEST_FILE_COLUMNS);
+  const audioSource = directUrl || filePath;
+  const audioUrl = resolveManifestUrl(audioSource, manifestUrl);
+  const l1Raw = readField(row, [
+    "l1_condition",
+    "l1",
+    "native_language",
+    "native",
+    "speaker_l1",
+  ]);
+  const pronunciationRaw = readField(row, [
+    "pronunciation_condition",
+    "pronunciation",
+    "accent_condition",
+    "accent",
+    "style",
+  ]);
+  const l1 = normalizeL1(l1Raw) || l1Raw;
+  const pronunciation = normalizePronunciation(pronunciationRaw) || pronunciationRaw;
+  const sourcePath = filePath || audioUrl;
+  const fileName = fileNameFromPath(sourcePath || audioUrl, `server_manifest_${index + 1}.wav`);
+
+  return {
+    id: index + 1,
+    file: undefined,
+    source_path: sourcePath,
+    audio_url: audioUrl,
+    file_name: fileName,
+    target_word: readField(row, ["target_word", "word", "item", "expected_word"]),
+    participant_id: readField(row, ["participant_id", "participant", "speaker_id", "speaker"]),
+    native_language: l1,
+    l1_condition: l1,
+    pronunciation_condition: pronunciation,
+    accent_condition: pronunciation,
+    condition: readField(row, ["condition", "pass_condition", "variability_condition"]),
+    talker: readField(row, ["talker", "talker_id", "voice", "voice_alias"]),
+    pass_number: readField(row, ["pass_number", "pass"]),
+    word_number: readField(row, ["word_number", "word_id", "item_id", "word_no"]),
+    trial_number: readField(row, ["trial_number", "trial"]),
+    take_number: readField(row, ["take_number", "take"]),
+    spoken_form: readField(row, ["spoken_form", "spoken_text", "prompt"]),
+    practice_note: readField(row, ["practice_note", "note", "notes"]),
+    source_format: readField(row, ["source_format"]) || "server_manifest",
+    stimulus_list: readField(row, ["stimulus_list", "list", "list_id", "counterbalance_list"]).toUpperCase(),
+  };
+}
+
+async function fetchManifest(context, source) {
+  const requestUrl = new URL(context.request.url);
+  const resolved = new URL(source, requestUrl.origin);
+  const isRelative = !/^https?:\/\//i.test(source);
+
+  if (isRelative && context.env?.ASSETS?.fetch) {
+    const assetUrl = new URL(`${resolved.pathname}${resolved.search}`, requestUrl.origin);
+    return {
+      response: await context.env.ASSETS.fetch(new Request(assetUrl.toString())),
+      resolvedUrl: assetUrl.toString(),
+    };
+  }
+
+  return {
+    response: await fetch(new Request(resolved.toString(), {
+      headers: { "cache-control": "no-store" },
+    })),
+    resolvedUrl: resolved.toString(),
+  };
+}
+
 export function normalizeL1(value) {
   const text = cleanText(value).toLowerCase();
   if (["ame", "american", "us", "usa", "english", "native_english"].includes(text)) {
@@ -275,6 +417,34 @@ export async function ensureCounterbalanceCells(db) {
       .bind(cell.cell_id, cell.list_comb, cell.pronunciation_style),
   );
   await db.batch(statements);
+}
+
+export async function loadCounterbalanceMaterials(context) {
+  const configuredSource = cleanText(context.env?.COUNTERBALANCE_MANIFEST_URL);
+  const source = configuredSource || DEFAULT_COUNTERBALANCE_MANIFEST;
+  const { response, resolvedUrl } = await fetchManifest(context, source);
+
+  if (!response.ok) {
+    throw new Error(`Could not load server counterbalance manifest (${response.status}).`);
+  }
+
+  const rows = parseCsv(await response.text());
+  const materials = rows
+    .map((row, index) => manifestRowToMaterial(row, resolvedUrl, index))
+    .filter((item) => item.audio_url);
+
+  if (!materials.length) {
+    throw new Error("Server counterbalance manifest contains no playable audio rows.");
+  }
+
+  return {
+    materials,
+    summary: {
+      source: configuredSource ? "COUNTERBALANCE_MANIFEST_URL" : DEFAULT_COUNTERBALANCE_MANIFEST,
+      row_count: rows.length,
+      material_count: materials.length,
+    },
+  };
 }
 
 export async function allocateCounterbalance(db, sessionId, assignedAt) {
@@ -389,6 +559,9 @@ export function counterbalancePayload(cell) {
   };
 }
 
-export function safeMaterialsJson(materials) {
-  return safeJson({ material_count: Array.isArray(materials) ? materials.length : 0 });
+export function safeMaterialsJson(materialsOrSummary) {
+  if (Array.isArray(materialsOrSummary)) {
+    return safeJson({ material_count: materialsOrSummary.length });
+  }
+  return safeJson(materialsOrSummary || { material_count: 0 });
 }

@@ -45,9 +45,9 @@ http://127.0.0.1:8765/Rating_Platform/
 
 ## GitHub Audio Workflow
 
-Use `remote_manifest.csv` when stimulus recordings are already uploaded to GitHub, GitHub Pages, Cloudflare Pages, or another static host. The default manifest loads automatically. A custom manifest URL is available through the `Use a custom stimulus manifest` option.
+Use `remote_manifest.csv` when stimulus recordings are already uploaded to GitHub, GitHub Pages, Cloudflare Pages, R2, or another static host. The default manifest loads automatically for preview. A custom manifest URL is available through the `Use a custom stimulus manifest` option for local/manual preview workflows.
 
-For the Cloudflare/Prolific version, server-side counterbalancing is enabled by default. All usable rows in `remote_manifest.csv` form the candidate stimulus pool, and the server assigns each participant to one of 20 counterbalance cells. Use `?manual=1` only for the older manual participant-selection workflow.
+For the Cloudflare/Prolific version, server-side counterbalancing is enabled by default. The server reads the authoritative stimulus pool from `remote_manifest.csv`, or from the `COUNTERBALANCE_MANIFEST_URL` Pages secret when that secret is set, and assigns each participant to one of 20 counterbalance cells. The browser does not provide the main stimulus pool to `/api/session/start`. Use `?manual=1` only for the older manual participant-selection workflow.
 
 Recommended GitHub Pages layout:
 
@@ -176,7 +176,7 @@ Do not commit:
 - R2 object exports or private audio files that should not be public.
 - Prolific participant identifiers or downloaded study data.
 
-Production response data is stored in Cloudflare D1. Large/private audio assets should be served from Cloudflare R2 or another approved storage location. Secrets such as `ADMIN_TOKEN` should be stored with Cloudflare Pages Secrets, not in GitHub.
+Production response data is stored in Cloudflare D1. Large/private audio assets should be served from Cloudflare R2 or another approved storage location. Secrets such as `ADMIN_TOKEN` and private manifest URLs should be stored with Cloudflare Pages Secrets, not in GitHub.
 
 Cloudflare Pages can still be connected to GitHub for deployment: GitHub provides the code, while runtime data and secrets stay in Cloudflare services.
 
@@ -278,11 +278,27 @@ If the D1 database was created before counterbalancing was added, run this migra
 wrangler d1 execute <DB_NAME> --file=./db/migrations/0002_counterbalance.sql
 ```
 
+Then apply the hardening migration, which is safe to run more than once:
+
+```sh
+wrangler d1 execute <DB_NAME> --file=./db/migrations/0003_hardening.sql
+```
+
+If this migration fails on an existing pilot database because duplicate Prolific IDs already exist, export `sessions.csv`, resolve or archive the duplicate pilot rows, and rerun the migration.
+
 Configure the Pages Functions D1 binding as `DB`. Set an admin token as a Cloudflare secret:
 
 ```sh
 wrangler pages secret put ADMIN_TOKEN
 ```
+
+If the production manifest should not be committed as `remote_manifest.csv`, set an authoritative manifest URL as a Pages secret:
+
+```sh
+wrangler pages secret put COUNTERBALANCE_MANIFEST_URL
+```
+
+Admin APIs fail closed when `ADMIN_TOKEN` is missing.
 
 Rater responses are saved trial-by-trial to D1. The local ZIP download remains as a backup, but the server-backed workflow advances only after the current response has been saved.
 

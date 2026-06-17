@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const VERSION = "pronunciation_rating_v0.4.1";
+  const VERSION = "pronunciation_rating_v0.5.0";
   const DEFAULT_REMOTE_MANIFEST_URL = "remote_manifest.csv";
   const AUDIO_EXTENSIONS = /\.(wav|mp3|m4a|ogg|webm)$/i;
   const REQUIRED_MANIFEST_FILE_COLUMNS = ["audio_file", "file", "filename", "path"];
@@ -216,7 +216,7 @@
     serverSessionId: "",
     serverSaveFailed: false,
     counterbalance: {
-      enabled: false,
+      enabled: COUNTERBALANCE_ENABLED,
       assigned: null,
     },
   };
@@ -253,15 +253,18 @@
       state.remoteRows.length > 0 &&
       selectedRemoteParticipants().length === 0;
     updateSetupSummary(audioCount, targetCount, manifestCount);
-    if (state.counterbalance.enabled && state.items.length) {
-      const enoughCandidates = state.items.length >= 100;
-      const ready = Boolean(els.raterId.value.trim() && enoughCandidates);
+    if (state.counterbalance.enabled) {
+      const previewCount = state.items.length || state.remoteRows.length;
+      const ready = Boolean(els.raterId.value.trim());
+      updateSetupSummary(
+        previewCount || "server",
+        targetCount || 0,
+        manifestCount || "server",
+      );
       setSetupStatus(
         ready
           ? "Ready"
-          : enoughCandidates
-            ? "Participant ID needed"
-            : "Manifest incomplete",
+          : "Participant ID needed",
         ready,
       );
       els.startBtn.disabled = !ready;
@@ -505,7 +508,6 @@
         expert_comprehensibility_1_9: item.expert_comprehensibility_1_9 || "",
         expert_accentedness_1_9: item.expert_accentedness_1_9 || "",
       }));
-      payload.materials = state.items.map(({ file, manifest, ...item }) => item);
     } else {
       payload.assignment = serverAssignmentRows();
     }
@@ -967,14 +969,12 @@
     const enoughCandidates = state.items.length >= 100;
     updateSetupSummary(state.items.length, targetCount, rows.length);
     setSetupStatus(
-      raterId && enoughCandidates
+      raterId
         ? "Ready"
-        : raterId
-          ? "Manifest incomplete"
-          : "Participant ID needed",
-      Boolean(raterId && enoughCandidates),
+        : "Participant ID needed",
+      Boolean(raterId),
     );
-    els.startBtn.disabled = !(raterId && enoughCandidates);
+    els.startBtn.disabled = !raterId;
     els.downloadBtn.disabled = true;
     setLog([
       `version: ${VERSION}`,
@@ -1326,7 +1326,7 @@
       els.startBtn.disabled = false;
       return;
     }
-    if (!state.items.length && !state.mainTrials.length) {
+    if (!state.counterbalance.enabled && !state.items.length && !state.mainTrials.length) {
       setSetupStatus("Audio needed");
       setLog("Load or prepare the rating materials before starting.");
       els.startBtn.disabled = false;
@@ -1342,23 +1342,13 @@
         `Server session could not be started: ${error.message}\n` +
           (SERVER_SAVE_REQUIRED
             ? "Server saving is required. Do not run data collection until this is fixed."
-            : "Continuing in local mode because ?local=1 is set."),
+            : state.counterbalance.enabled
+              ? "Counterbalanced sessions require the server manifest and cannot fall back to local randomization."
+              : "Continuing in local mode because ?local=1 is set."),
       );
-      if (SERVER_SAVE_REQUIRED) {
+      if (SERVER_SAVE_REQUIRED || state.counterbalance.enabled) {
         els.startBtn.disabled = false;
         return;
-      }
-      if (state.counterbalance.enabled && !state.mainTrials.length) {
-        const seed = els.seed.value.trim() || `${els.raterId.value.trim()}_${els.sessionId.value.trim()}_${VERSION}`;
-        state.mainTrials = shuffle(
-          state.items.slice(0, 100).map((item) => ({
-            ...item,
-            phase: "main",
-            practice_kind: "",
-            practice_note: `${item.practice_note || ""} LOCAL FALLBACK: server counterbalance was not applied.`.trim(),
-          })),
-          seed,
-        );
       }
     }
     state.running = true;
@@ -1907,6 +1897,8 @@
     state.manifestRows = [];
     state.remoteRows = [];
     state.remoteManifestUrl = "";
+    state.counterbalance.enabled = COUNTERBALANCE_ENABLED;
+    state.counterbalance.assigned = null;
     state.currentIndex = -1;
     state.phase = "main";
     state.pendingPracticeRow = null;
@@ -2031,8 +2023,16 @@
   updateSelectedMaterialSummary();
   loadRemoteParticipants().catch((error) => {
     els.loadParticipantsBtn.disabled = false;
-    setSetupStatus("Remote load failed");
-    setLog(`Remote participant load failed: ${error.message}`);
+    if (COUNTERBALANCE_ENABLED) {
+      updateSelectedMaterialSummary();
+      setLog(
+        `Stimulus preview load failed: ${error.message}\n` +
+          "The server will load the authoritative counterbalance manifest when the session starts.",
+      );
+    } else {
+      setSetupStatus("Remote load failed");
+      setLog(`Remote participant load failed: ${error.message}`);
+    }
   });
   renderScales();
 })();

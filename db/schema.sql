@@ -188,8 +188,16 @@ INSERT OR IGNORE INTO counterbalance_cells (cell_id, list_comb, pronunciation_st
 CREATE INDEX IF NOT EXISTS idx_sessions_rater ON sessions(rater_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
 CREATE INDEX IF NOT EXISTS idx_sessions_counterbalance ON sessions(counterbalance_cell, status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_prolific_session_unique
+  ON sessions(prolific_session_id)
+  WHERE prolific_session_id IS NOT NULL AND prolific_session_id != '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_prolific_pid_study_unique
+  ON sessions(prolific_pid, prolific_study_id)
+  WHERE prolific_pid IS NOT NULL AND prolific_pid != ''
+    AND prolific_study_id IS NOT NULL AND prolific_study_id != '';
 CREATE INDEX IF NOT EXISTS idx_assignments_session ON rating_assignments(session_id, phase, trial_index);
 CREATE INDEX IF NOT EXISTS idx_trials_session ON rating_trials(session_id, phase, trial_index);
 CREATE INDEX IF NOT EXISTS idx_trials_participant ON rating_trials(participant_id);
 CREATE INDEX IF NOT EXISTS idx_events_session ON event_logs(session_id, event_at);
 CREATE INDEX IF NOT EXISTS idx_counterbalance_allocations_cell ON counterbalance_allocations(cell_id, status);
+CREATE INDEX IF NOT EXISTS idx_counterbalance_allocations_updated ON counterbalance_allocations(status, updated_at);

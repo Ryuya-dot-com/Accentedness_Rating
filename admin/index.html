@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rating Platform Admin</title>
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .admin-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 18px 0;
+      }
+      .admin-card {
+        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+      }
+      .admin-card span {
+        color: var(--ink-muted);
+        display: block;
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 5px;
+      }
+      .admin-card strong {
+        display: block;
+        font-size: 28px;
+      }
+      .admin-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .admin-token {
+        max-width: 520px;
+      }
+      @media (max-width: 820px) {
+        .admin-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 560px) {
+        .admin-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Accentedness project</p>
+          <h1>Rating Platform Admin</h1>
+        </div>
+        <div class="version">Server exports</div>
+      </header>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Data export</h2>
+            <p>Download server-saved rating responses and complete event logs.</p>
+          </div>
+          <div class="setup-status" id="admin-status">Not loaded</div>
+        </div>
+
+        <label class="admin-token">
+          Admin token
+          <input id="admin-token" type="password" autocomplete="off" />
+        </label>
+
+        <div class="admin-actions">
+          <button id="refresh-btn">Refresh summary</button>
+          <button id="ratings-btn" class="secondary">Download ratings CSV</button>
+          <button id="sessions-btn" class="secondary">Download sessions CSV</button>
+          <button id="assignments-btn" class="secondary">Download assignments CSV</button>
+          <button id="events-btn" class="secondary">Download event logs CSV</button>
+          <button id="counterbalance-btn" class="secondary">Download counterbalance CSV</button>
+        </div>
+
+        <div class="admin-grid">
+          <div class="admin-card">
+            <span>Sessions</span>
+            <strong id="count-sessions">0</strong>
+          </div>
+          <div class="admin-card">
+            <span>Rating trials</span>
+            <strong id="count-trials">0</strong>
+          </div>
+          <div class="admin-card">
+            <span>Assignments</span>
+            <strong id="count-assignments">0</strong>
+          </div>
+          <div class="admin-card">
+            <span>Event logs</span>
+            <strong id="count-events">0</strong>
+          </div>
+        </div>
+
+        <pre id="admin-log" class="log" aria-live="polite"></pre>
+      </section>
+    </main>
+    <script src="admin.js"></script>
+  </body>
+</html>

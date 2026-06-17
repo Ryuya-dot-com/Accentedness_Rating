@@ -1,0 +1,12 @@
+name = "accentedness-rating-platform"
+compatibility_date = "2026-06-17"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "accentedness-rating"
+database_id = "replace-with-cloudflare-d1-database-id"
+
+# Set the real value with:
+#   wrangler pages secret put ADMIN_TOKEN
+# Do not put ADMIN_TOKEN in this file.

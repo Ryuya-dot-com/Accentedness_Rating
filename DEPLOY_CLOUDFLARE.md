@@ -1,8 +1,13 @@
 # Cloudflare Deployment Guide
 
-This guide describes the minimal deployment path for confirming that the rating platform works on Cloudflare Pages with Pages Functions and D1.
+This guide describes deployment paths for confirming that the rating platform works on Cloudflare Pages with Pages Functions and D1.
 
-Use the project directory as the deployment root:
+There are two supported deployment styles:
+
+- **GitHub integration**: recommended after pushing this repository to `Ryuya-dot-com/Accentedness_Rating`.
+- **Direct Upload**: useful for a quick CLI-only feasibility test.
+
+If deploying from the local Dropbox workspace, use the project directory as the deployment root:
 
 ```sh
 cd /Users/tohokusla/Dropbox/Accentedness/Experiment/Rating_Platform
@@ -23,6 +28,41 @@ Rating_Platform/
 
 Do not deploy from `/Users/tohokusla/Dropbox/Accentedness` or `/Users/tohokusla/Dropbox/Accentedness/Experiment`. The `functions/` directory must be at the Pages project root.
 
+If deploying from `Ryuya-dot-com/Accentedness_Rating`, the repository root is already the Pages project root.
+
+## GitHub Integration
+
+Use this route for normal Cloudflare Pages deployment.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages**.
+2. Select **Create application** > **Pages**.
+3. Connect the GitHub repository:
+
+```text
+Ryuya-dot-com/Accentedness_Rating
+```
+
+4. Use these build settings:
+
+```text
+Production branch: main
+Framework preset: None
+Build command: empty
+Build output directory: .
+Root directory: /
+```
+
+5. After the Pages project exists, configure bindings and secrets in Cloudflare, not in GitHub:
+
+```text
+D1 binding name: DB
+Pages secret: ADMIN_TOKEN
+```
+
+6. Create and initialize D1 with the SQL commands below.
+
+GitHub should contain code, schema, templates, and non-sensitive demo files only. Participant responses, admin tokens, and private audio assets should remain in Cloudflare D1/R2/Secrets or other approved storage.
+
 ## 1. Install and Log In to Wrangler
 
 Use Wrangler through `npx` so a project-local install is not required:
@@ -34,9 +74,9 @@ npx wrangler whoami
 
 If `whoami` shows your Cloudflare account, the CLI is ready.
 
-## 2. Create a Cloudflare Pages Project
+## 2. Create a Cloudflare Pages Project by Direct Upload
 
-For the first feasibility test, use Direct Upload from Wrangler:
+For a CLI-only feasibility test, use Direct Upload from Wrangler:
 
 ```sh
 npx wrangler pages project create accentedness-rating-platform --production-branch main

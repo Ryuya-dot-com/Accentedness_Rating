@@ -146,6 +146,7 @@ Counterbalance reference files:
 - `counterbalance_table.csv`: the 20 allocation cells.
 - `counterbalance_list_specs.csv`: the A-J word-number ranges.
 - `remote_manifest_template.csv`: recommended stimulus manifest columns.
+- `scripts/verify_counterbalance.mjs`: local verification for 100-trial generation and no-3-consecutive `AME`/`JPN` ordering.
 
 Recommended production manifest columns:
 
@@ -156,6 +157,12 @@ audio_file,audio_url,target_word,participant_id,l1_condition,pronunciation_condi
 Use `natural` or `accented` in `pronunciation_condition`. The participant-level `pronunciation_style` values `a` and `b` are assigned by the server and should not be used as row-level pronunciation labels.
 
 `stimulus_list` is optional in the code, but including it is recommended. If several rows share the same `L1 x word_number x pronunciation_condition`, the server selects one row per required trial using the session seed. The final order is then randomized with the no-3-consecutive `AME`/`JPN` constraint.
+
+To verify the counterbalance logic locally:
+
+```sh
+node scripts/verify_counterbalance.mjs
+```
 
 ## Cloudflare and GitHub Separation
 
